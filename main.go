@@ -45,18 +45,26 @@ eventloop:
 		case xproto.MapRequestEvent:
 			log.Println(event)
 			wattr, err := xproto.GetWindowAttributes(conn, e.Window).Reply()
-			log.Println("MAP", wattr)
 			if err != nil || !wattr.OverrideRedirect {
+				log.Println("HAS NO OVERRIDEREDIRECT", e.Window)
 				win := NewWindow(uint32(e.Window), manager.Mailbox(), conn)
 				win.Reattach(manager.Curr())
 				win.Activate(manager.Curr())
 			} else {
-				log.Println("=============ERR OR OVERRIDE REDIRECT")
+				log.Println("HAS OVERRIDEREDIRECT", e.Window)
 			}
 		case xproto.DestroyNotifyEvent:
 			log.Println(event)
 			win := NewWindow(uint32(e.Window), manager.Mailbox(), conn)
 			win.Remove()
+		case xproto.ButtonPressEvent:
+			log.Println(event)
+			if e.Child > 0 {
+				win := NewWindow(uint32(e.Child), manager.Mailbox(), conn)
+				win.FocusHere()
+			}
+			xproto.AllowEventsChecked(conn, xproto.AllowReplayPointer, e.Time)
+			xproto.AllowEventsChecked(conn, xproto.AllowReplayKeyboard, e.Time)
 		default:
 			log.Println(event)
 		}
@@ -76,7 +84,7 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 
 		return nil
 
-	case kbrd.XK_Return:
+	case kbrd.XK_t:
 		winActive := (key.State & xproto.ModMask4) != 0
 		if winActive {
 			cmd := exec.Command("xterm")
@@ -310,6 +318,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	xutil.GrabMouse(conn, root)
 	xutil.GrabShortcuts(conn, root, keymap)
 	manager := NewWorkspaceManager(mainscr, auxscr)
 

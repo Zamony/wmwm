@@ -87,6 +87,11 @@ func (window *Window) Exit() {
 	window.mailbox <- msg
 }
 
+func (window *Window) FocusHere() {
+	msg := proto.Message{window.id, 0, proto.FocusHere, window.conn}
+	window.mailbox <- msg
+}
+
 func (window *Window) FocusLeft(id uint32) {
 	msg := proto.Message{window.id, id, proto.FocusLeft, window.conn}
 	window.mailbox <- msg
@@ -169,15 +174,15 @@ func (window *Window) MapW() error {
 	err := xproto.MapWindowChecked(
 		window.conn, xproto.Window(window.id),
 	).Check()
-	err2 := xproto.ChangeWindowAttributesChecked(
+	if err != nil {
+		return err
+	}
+	err = xproto.ChangeWindowAttributesChecked(
 		window.conn, xproto.Window(window.id),
 		xproto.CwEventMask, []uint32{
-			xproto.EventMaskStructureNotify | xproto.EventMaskButtonPress,
+			xproto.EventMaskStructureNotify | xproto.EventMaskEnterWindow,
 		},
 	).Check()
-	if err2 != nil {
-		log.Fatal(err2)
-	}
 	return err
 }
 
@@ -204,6 +209,20 @@ func (window *Window) CloseW() error {
 
 func (window *Window) DestroyW() error {
 	return xproto.DestroyWindowChecked(window.conn, xproto.Window(window.id)).Check()
+}
+
+func (window *Window) CouldBeManaged() bool {
+	x := window.x
+	err := xproto.ConfigureWindowChecked(
+		window.conn, xproto.Window(window.id),
+		xproto.ConfigWindowX, []uint32{uint32(x)},
+	).Check()
+
+	if err != nil {
+		return false
+	}
+
+	return true
 }
 
 func (window *Window) TakeFocus() error {

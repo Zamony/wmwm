@@ -34,7 +34,7 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 		kbrd.XK_F2: 0, kbrd.XK_F3: 0, kbrd.XK_F4: 0, kbrd.XK_F5: 0,
 		kbrd.XK_F6: 0, kbrd.XK_F7: 0, kbrd.XK_F8: 0, kbrd.XK_F9: 0,
 		kbrd.XK_Left: 0, kbrd.XK_Right: 0, kbrd.XK_Up: 0, kbrd.XK_Down: 0,
-		kbrd.XK_q: 0, kbrd.XK_Return: 0, kbrd.XK_grave: 0,
+		kbrd.XK_q: 0, kbrd.XK_Return: 0, kbrd.XK_grave: 0, kbrd.XK_t: 0,
 	}
 	for i, syms := range keymap {
 		for _, sym := range syms {
@@ -47,7 +47,7 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 	if err := xproto.GrabKeyChecked(
 		conn, false, xroot.Root,
 		xproto.ModMask4,
-		sym2code[kbrd.XK_Return], xproto.GrabModeAsync, xproto.GrabModeAsync,
+		sym2code[kbrd.XK_t], xproto.GrabModeAsync, xproto.GrabModeAsync,
 	).Check(); err != nil {
 		log.Print(err)
 	}
@@ -296,6 +296,14 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 	).Check(); err != nil {
 		log.Print(err)
 	}
+}
+
+func GrabMouse(conn *xgb.Conn, xroot xproto.ScreenInfo) error {
+	return xproto.GrabButtonChecked(
+		conn, true, xroot.Root, xproto.EventMaskButtonPress,
+		xproto.GrabModeSync, xproto.GrabModeSync, xproto.WindowNone,
+		xproto.CursorNone, xproto.ButtonIndex1, xproto.ModMaskAny,
+	).Check()
 }
 
 func GetScreens(conn *xgb.Conn) (main Screen, aux Screen, err error) {
