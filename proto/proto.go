@@ -7,8 +7,10 @@ import (
 const (
 	Attach = iota
 	Detach
+	Reattach
 	Activate
 	Deactivate
+	Remove
 	MoveLeft
 	MoveRight
 	MoveUp

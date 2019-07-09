@@ -34,7 +34,7 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 		kbrd.XK_F2: 0, kbrd.XK_F3: 0, kbrd.XK_F4: 0, kbrd.XK_F5: 0,
 		kbrd.XK_F6: 0, kbrd.XK_F7: 0, kbrd.XK_F8: 0, kbrd.XK_F9: 0,
 		kbrd.XK_Left: 0, kbrd.XK_Right: 0, kbrd.XK_Up: 0, kbrd.XK_Down: 0,
-		kbrd.XK_q: 0, kbrd.XK_e: 0,
+		kbrd.XK_q: 0, kbrd.XK_Return: 0, kbrd.XK_grave: 0,
 	}
 	for i, syms := range keymap {
 		for _, sym := range syms {
@@ -46,8 +46,8 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 
 	if err := xproto.GrabKeyChecked(
 		conn, false, xroot.Root,
-		xproto.ModMaskControl|xproto.ModMask1,
-		sym2code[kbrd.XK_e], xproto.GrabModeAsync, xproto.GrabModeAsync,
+		xproto.ModMask4,
+		sym2code[kbrd.XK_Return], xproto.GrabModeAsync, xproto.GrabModeAsync,
 	).Check(); err != nil {
 		log.Print(err)
 	}
@@ -56,6 +56,69 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 		conn, false, xroot.Root,
 		uint16(0),
 		sym2code[kbrd.XK_F1], xproto.GrabModeAsync,
+		xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		uint16(0),
+		sym2code[kbrd.XK_F2], xproto.GrabModeAsync,
+		xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		uint16(0),
+		sym2code[kbrd.XK_F3], xproto.GrabModeAsync,
+		xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		uint16(0),
+		sym2code[kbrd.XK_F4], xproto.GrabModeAsync,
+		xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		uint16(0),
+		sym2code[kbrd.XK_F5], xproto.GrabModeAsync,
+		xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		uint16(0),
+		sym2code[kbrd.XK_F6], xproto.GrabModeAsync,
+		xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		uint16(0),
+		sym2code[kbrd.XK_F7], xproto.GrabModeAsync,
+		xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		uint16(0),
+		sym2code[kbrd.XK_F8], xproto.GrabModeAsync,
 		xproto.GrabModeAsync,
 	).Check(); err != nil {
 		log.Print(err)
@@ -153,6 +216,86 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 	).Check(); err != nil {
 		log.Print(err)
 	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		xproto.ModMask4,
+		sym2code[kbrd.XK_F1], xproto.GrabModeAsync, xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		xproto.ModMask4,
+		sym2code[kbrd.XK_F2], xproto.GrabModeAsync, xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		xproto.ModMask4,
+		sym2code[kbrd.XK_F3], xproto.GrabModeAsync, xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		xproto.ModMask4,
+		sym2code[kbrd.XK_F4], xproto.GrabModeAsync, xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		xproto.ModMask4,
+		sym2code[kbrd.XK_F5], xproto.GrabModeAsync, xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		xproto.ModMask4,
+		sym2code[kbrd.XK_F6], xproto.GrabModeAsync, xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		xproto.ModMask4,
+		sym2code[kbrd.XK_F7], xproto.GrabModeAsync, xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		xproto.ModMask4,
+		sym2code[kbrd.XK_F8], xproto.GrabModeAsync, xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		xproto.ModMask4,
+		sym2code[kbrd.XK_F9], xproto.GrabModeAsync, xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
+		xproto.ModMask4,
+		sym2code[kbrd.XK_grave], xproto.GrabModeAsync, xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
 }
 
 func GetScreens(conn *xgb.Conn) (main Screen, aux Screen, err error) {
@@ -175,4 +318,32 @@ func GetScreens(conn *xgb.Conn) (main Screen, aux Screen, err error) {
 	}
 
 	return main, aux, nil
+}
+
+func CreateCursor(conn *xgb.Conn) (xproto.Cursor, error) {
+	cursor, err := xproto.NewCursorId(conn)
+	if err != nil {
+		return cursor, err
+	}
+	font, err := xproto.NewFontId(conn)
+	if err != nil {
+		return cursor, err
+	}
+	err = xproto.OpenFontChecked(conn, font, uint16(len("cursor")), "cursor").Check()
+	if err != nil {
+		return cursor, err
+	}
+	const xcLeftPtr = 68 // XC_left_ptr from cursorfont.h.
+	err = xproto.CreateGlyphCursorChecked(
+		conn, cursor, font, font, xcLeftPtr, xcLeftPtr+1,
+		0xffff, 0xffff, 0xffff, 0, 0, 0,
+	).Check()
+	if err != nil {
+		return cursor, err
+	}
+	err = xproto.CloseFontChecked(conn, font).Check()
+	if err != nil {
+		return cursor, err
+	}
+	return cursor, nil
 }

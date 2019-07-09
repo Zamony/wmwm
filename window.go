@@ -32,13 +32,28 @@ func (window *Window) Attach(to uint32) {
 	window.mailbox <- msg
 }
 
-func (window *Window) Deactivate() {
-	msg := proto.Message{window.id, 0, proto.Deactivate, window.conn}
+func (window *Window) Detach(to uint32) {
+	msg := proto.Message{window.id, to, proto.Detach, window.conn}
+	window.mailbox <- msg
+}
+
+func (window *Window) Reattach(to uint32) {
+	msg := proto.Message{window.id, to, proto.Reattach, window.conn}
+	window.mailbox <- msg
+}
+
+func (window *Window) Deactivate(to uint32) {
+	msg := proto.Message{window.id, to, proto.Deactivate, window.conn}
 	window.mailbox <- msg
 }
 
 func (window *Window) Activate(id uint32) {
 	msg := proto.Message{window.id, id, proto.Activate, window.conn}
+	window.mailbox <- msg
+}
+
+func (window *Window) Remove() {
+	msg := proto.Message{window.id, 0, proto.Remove, window.conn}
 	window.mailbox <- msg
 }
 
@@ -154,22 +169,64 @@ func (window *Window) MapW() error {
 	err := xproto.MapWindowChecked(
 		window.conn, xproto.Window(window.id),
 	).Check()
+	err2 := xproto.ChangeWindowAttributesChecked(
+		window.conn, xproto.Window(window.id),
+		xproto.CwEventMask, []uint32{
+			xproto.EventMaskStructureNotify | xproto.EventMaskButtonPress,
+		},
+	).Check()
+	if err2 != nil {
+		log.Fatal(err2)
+	}
+	return err
+}
+
+func (window *Window) UnmapW() error {
+	err := xproto.UnmapWindowChecked(
+		window.conn, xproto.Window(window.id),
+	).Check()
 	return err
 }
 
 func (window *Window) CloseW() error {
-	if !xutil.HasAtomDefined("WM_DELETE_WINDOW", window.id, window.conn) {
-		err := xproto.DestroyWindowChecked(window.conn, xproto.Window(window.id)).Check()
-		return err
-	}
+	// if !xutil.HasAtomDefined("WM_DELETE_WINDOW", window.id, window.conn) {
+	// 	err :=
+	// 	return err
+	// }
 
-	return xutil.SendClientEvent("WM_DELETE_WINDOW", window.id, window.conn)
+	return xutil.SendClientEvent(
+		"WM_DELETE_WINDOW",
+		xproto.TimeCurrentTime,
+		window.id,
+		window.conn,
+	)
+}
+
+func (window *Window) DestroyW() error {
+	return xproto.DestroyWindowChecked(window.conn, xproto.Window(window.id)).Check()
 }
 
 func (window *Window) TakeFocus() error {
 	if window == nil {
 		return nil
 	}
+	timepoint := uint32(xproto.TimeCurrentTime)
+	if timepoint != 0 {
+		timepoint--
+	}
+	if xutil.HasAtomDefined("WM_TAKE_FOCUS", window.id, window.conn) {
+		println("HAS WM_TAKE_FOCUS")
+		err := xutil.SendClientEvent(
+			"WM_TAKE_FOCUS",
+			timepoint,
+			window.id,
+			window.conn,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
 	err := xproto.SetInputFocusChecked(
 		window.conn, xproto.InputFocusPointerRoot,
 		xproto.Window(window.id), xproto.TimeCurrentTime,

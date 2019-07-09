@@ -77,22 +77,46 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
 	workspace.PrintStatus()
 	switch msg.Type {
 	case proto.Attach:
-		window := NewWindow(msg.From, workspace.headc, msg.XConn)
-		workspace.Add(window)
-		workspace.Reshape()
+		//println("ATTACH", msg.From)
+		win := NewWindow(workspace.id, workspace.headc, msg.XConn)
+		go func() { win.Detach(msg.From) }()
+	case proto.Reattach:
+		//println("REATTACH", msg.From)
+		win := NewWindow(msg.From, workspace.headc, msg.XConn)
+		if workspace.FindWindow(msg.From) == nil {
+			log.Println("=== INCOME", msg.From)
+			workspace.Add(win)
+			log.Println("=== ADD completed")
+			workspace.Reshape()
+			log.Println("=== RESHAPE completed")
+		}
 	case proto.Detach:
-		window := workspace.FindWindow(msg.From)
-		if window == workspace.focus {
+		//println("DETACH", msg.From, workspace.focus.Id())
+		if workspace.focus != nil {
+			win := workspace.focus
+			go func() { win.Reattach(msg.From) }()
+			workspace.Refocus()
+			workspace.Remove(win)
+			win.UnmapW()
+			workspace.Reshape()
+			workspace.focus.TakeFocus()
+		}
+	case proto.Remove:
+		win := NewWindow(msg.From, workspace.headc, msg.XConn)
+		if win.Id() == workspace.focus.Id() {
 			workspace.Refocus()
 		}
-		workspace.Remove(window)
+		workspace.Remove(win)
 		workspace.Reshape()
+
 	case proto.Close:
 		win := workspace.focus
-		if win != nil {
+		if win != nil && !xutil.HasAtomDefined("WM_DELETE_WINDOW", win.Id(), msg.XConn) {
 			workspace.Refocus()
 			workspace.Remove(win)
 			workspace.Reshape()
+			win.DestroyW()
+		} else if win != nil {
 			win.CloseW()
 		}
 	case proto.FocusLeft:
@@ -110,9 +134,10 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
 		workspace.focus.TakeFocus()
 	case proto.Activate:
 		workspace.Activate()
+		workspace.focus.TakeFocus()
 	case proto.Deactivate:
-		if workspace.id == MaxWorkspaces {
-			return
+		if workspace.id != MaxWorkspaces {
+			workspace.Deactivate()
 		}
 	case proto.ResizeLeft:
 		// println("RESIZE LEFT", msg.From)
@@ -257,6 +282,9 @@ func (workspace *Workspace) Add(window *Window) {
 }
 
 func (workspace *Workspace) Remove(window *Window) {
+	if window == nil {
+		return
+	}
 	nleft := workspace.left.Len()
 	nright := workspace.right.Len()
 
@@ -313,25 +341,25 @@ func (workspace *Workspace) Refocus() {
 	}
 
 	focus := workspace.FocusBottom()
-	if focus.Id() != workspace.focus.Id() {
+	if focus != nil && focus.Id() != workspace.focus.Id() {
 		workspace.focus = focus
 		return
 	}
 
 	focus = workspace.FocusTop()
-	if focus.Id() != workspace.focus.Id() {
+	if focus != nil && focus.Id() != workspace.focus.Id() {
 		workspace.focus = focus
 		return
 	}
 
 	focus = workspace.FocusLeft()
-	if focus.Id() != workspace.focus.Id() {
+	if focus != nil && focus.Id() != workspace.focus.Id() {
 		workspace.focus = focus
 		return
 	}
 
 	focus = workspace.FocusRight()
-	if focus.Id() != workspace.focus.Id() {
+	if focus != nil && focus.Id() != workspace.focus.Id() {
 		workspace.focus = focus
 		return
 	}
@@ -465,6 +493,33 @@ func (workspace *Workspace) Activate() {
 	}
 }
 
+func (workspace *Workspace) Deactivate() {
+	for i := 0; i < workspace.central.Len(); i++ {
+		win := workspace.central.WindowByIndex(i)
+		if win == nil {
+			log.Fatal("win = nil")
+		} else {
+			win.UnmapW()
+		}
+	}
+	for i := 0; i < workspace.left.Len(); i++ {
+		win := workspace.left.WindowByIndex(i)
+		if win == nil {
+			log.Fatal("win = nil")
+		} else {
+			win.UnmapW()
+		}
+	}
+	for i := 0; i < workspace.right.Len(); i++ {
+		win := workspace.right.WindowByIndex(i)
+		if win == nil {
+			log.Fatal("win = nil")
+		} else {
+			win.UnmapW()
+		}
+	}
+}
+
 func (workspace *Workspace) FindWindow(wid uint32) *Window {
 	if idx := workspace.central.IndexById(wid); idx > -1 {
 		return workspace.central.WindowByIndex(idx)
@@ -538,4 +593,8 @@ func (wrkmgr *WorkspaceManager) Mailbox() chan proto.Message {
 
 func (wrkmgr *WorkspaceManager) Curr() uint32 {
 	return wrkmgr.curr
+}
+
+func (wrkmgr *WorkspaceManager) SetCurr(n uint32) {
+	wrkmgr.curr = n
 }

@@ -23,11 +23,13 @@ eventloop:
 
 		switch e := event.(type) {
 		case xproto.KeyPressEvent:
+			log.Println(event)
 			err := handleKeyPress(conn, event.(xproto.KeyPressEvent), keymap, manager)
 			if err != nil {
 				break eventloop
 			}
 		case xproto.ConfigureRequestEvent:
+			log.Println(event)
 			ev := xproto.ConfigureNotifyEvent{
 				Event:            e.Window,
 				Window:           e.Window,
@@ -41,9 +43,20 @@ eventloop:
 			}
 			xproto.SendEventChecked(conn, false, e.Window, xproto.EventMaskStructureNotify, string(ev.Bytes()))
 		case xproto.MapRequestEvent:
+			log.Println(event)
+			wattr, err := xproto.GetWindowAttributes(conn, e.Window).Reply()
+			log.Println("MAP", wattr)
+			if err != nil || !wattr.OverrideRedirect {
+				win := NewWindow(uint32(e.Window), manager.Mailbox(), conn)
+				win.Reattach(manager.Curr())
+				win.Activate(manager.Curr())
+			} else {
+				log.Println("=============ERR OR OVERRIDE REDIRECT")
+			}
+		case xproto.DestroyNotifyEvent:
+			log.Println(event)
 			win := NewWindow(uint32(e.Window), manager.Mailbox(), conn)
-			win.Attach(manager.Curr())
-			win.Activate(manager.Curr())
+			win.Remove()
 		default:
 			log.Println(event)
 		}
@@ -63,10 +76,9 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 
 		return nil
 
-	case kbrd.XK_e:
-		ctrlActive := (key.State & xproto.ModMaskControl) != 0
-		altActive := (key.State & xproto.ModMask1) != 0
-		if ctrlActive && altActive {
+	case kbrd.XK_Return:
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive {
 			cmd := exec.Command("xterm")
 			err := cmd.Start()
 			go func() { cmd.Wait() }()
@@ -76,37 +88,98 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 		}
 		return nil
 	case kbrd.XK_F1:
-		win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-		win.Deactivate()
-		win.Activate(1)
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive && manager.Curr() != 1 {
+			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
+			win.Attach(1)
+		} else if !winActive {
+			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
+			win.Deactivate(manager.Curr())
+			win.Activate(1)
+			manager.SetCurr(1)
+		}
 	case kbrd.XK_F2:
-		win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-		win.Deactivate()
-		win.Activate(2)
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive && manager.Curr() != 2 {
+			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
+			win.Attach(2)
+		} else if !winActive {
+			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
+			win.Deactivate(manager.Curr())
+			win.Activate(2)
+			manager.SetCurr(2)
+		}
 	case kbrd.XK_F3:
-		win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-		win.Deactivate()
-		win.Activate(3)
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive && manager.Curr() != 3 {
+			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
+			win.Attach(3)
+		} else if !winActive {
+			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
+			win.Deactivate(manager.Curr())
+			win.Activate(3)
+			manager.SetCurr(3)
+		}
 	case kbrd.XK_F4:
-		win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-		win.Deactivate()
-		win.Activate(4)
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive && manager.Curr() != 4 {
+			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
+			win.Attach(4)
+		} else if !winActive {
+			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
+			win.Deactivate(manager.Curr())
+			win.Activate(4)
+			manager.SetCurr(4)
+		}
 	case kbrd.XK_F5:
-		win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-		win.Deactivate()
-		win.Activate(5)
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive && manager.Curr() != 5 {
+			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
+			win.Attach(5)
+		} else if !winActive {
+			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
+			win.Deactivate(manager.Curr())
+			win.Activate(5)
+			manager.SetCurr(5)
+		}
 	case kbrd.XK_F6:
-		win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-		win.Deactivate()
-		win.Activate(6)
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive && manager.Curr() != 6 {
+			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
+			win.Attach(6)
+		} else if !winActive {
+			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
+			win.Deactivate(manager.Curr())
+			win.Activate(6)
+		}
 	case kbrd.XK_F7:
-		win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-		win.Deactivate()
-		win.Activate(7)
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive && manager.Curr() != 7 {
+			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
+			win.Attach(7)
+		} else if !winActive {
+			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
+			win.Deactivate(manager.Curr())
+			win.Activate(7)
+			manager.SetCurr(7)
+		}
 	case kbrd.XK_F8:
-		win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-		win.Deactivate()
-		win.Activate(8)
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive && manager.Curr() != 8 {
+			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
+			win.Attach(8)
+		} else if !winActive {
+			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
+			win.Deactivate(manager.Curr())
+			win.Activate(8)
+			manager.SetCurr(8)
+		}
+	case kbrd.XK_F9:
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive && manager.Curr() != 9 {
+			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
+			win.Attach(9)
+		}
 	case kbrd.XK_Left:
 		winActive := (key.State & xproto.ModMask4) != 0
 		ctrlActive := (key.State & xproto.ModMaskControl) != 0
@@ -174,6 +247,17 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
 			win.Close(manager.Curr())
 		}
+	case kbrd.XK_grave:
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive {
+			cmd := exec.Command("rofi", "-show", "run")
+			err := cmd.Start()
+			go func() { cmd.Wait() }()
+			if err != nil {
+				return errors.New("Application launcher failed")
+			}
+		}
+		return nil
 	default:
 		return nil
 	}
@@ -197,6 +281,15 @@ func main() {
 		log.Fatal("Number of roots > 1, Xinerama init failed")
 	}
 	root := coninfo.Roots[0]
+	cursor, err := xutil.CreateCursor(conn)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := xproto.ChangeWindowAttributesChecked(
+		conn, root.Root, xproto.CwCursor, []uint32{uint32(cursor)},
+	).Check(); err != nil {
+		log.Fatal(err)
+	}
 
 	if err := xinerama.Init(conn); err != nil {
 		log.Fatal(err)
