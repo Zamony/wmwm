@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Zamony/wm/xutil"
 )
@@ -10,11 +11,20 @@ type Column struct {
 	width   int
 	x       int
 	windows []*Window
-	screen  xutil.Screen
+	screen  *xutil.Screen
 }
 
 func NewColumn(screen xutil.Screen) *Column {
-	return &Column{screen.Width(), 0, nil, screen}
+	return &Column{
+		screen.Width(), screen.XOffset(), nil,
+		xutil.NewScreen(
+			screen.Width(),
+			screen.Height(),
+			screen.XOffset(),
+			screen.YOffset(),
+			screen.Id(),
+		),
+	}
 }
 
 func (column Column) Len() int {
@@ -88,7 +98,8 @@ func (column *Column) WindowByIndex(idx int) *Window {
 }
 
 func (column *Column) SetX(x int) int {
-	column.x = x
+	fmt.Println(column.screen)
+	column.x = column.screen.XOffset() + x
 	return column.x
 }
 
@@ -104,7 +115,7 @@ func (column *Column) SetWidth50() int {
 
 func (column *Column) SetWidth80() int {
 	w := float32(column.screen.Width())
-	column.width = int(w * float32(0.8))
+	column.width = int(w * float32(0.65))
 	return column.width
 }
 

@@ -89,17 +89,30 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
 			workspace.Add(win)
 			workspace.Reshape()
 			workspace.focus.TakeFocus()
+			if workspace.id == MaxWorkspaces {
+				workspace.Activate()
+			}
 		}
 	case proto.Detach:
 		//println("DETACH", msg.From, workspace.focus.Id())
 		if workspace.focus != nil {
 			win := workspace.focus
-			go func() { win.Reattach(msg.From) }()
+			go func() {
+				win.Reattach(msg.From)
+				if workspace.id == MaxWorkspaces {
+					win.Activate(msg.From)
+				}
+			}()
 			workspace.Refocus()
 			workspace.Remove(win)
 			win.UnmapW()
 			workspace.Reshape()
 			workspace.focus.TakeFocus()
+			go func() {
+				if workspace.focus != nil {
+					workspace.focus.FocusHere()
+				}
+			}()
 		}
 	case proto.Remove:
 		win := NewWindow(msg.From, workspace.headc, msg.XConn)
@@ -145,11 +158,9 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
 		workspace.focus = workspace.FocusBottom()
 		workspace.focus.TakeFocus()
 	case proto.Activate:
-		println("===1")
+		println("ACTIVATE", workspace.id)
 		workspace.Activate()
-		println("===2")
 		workspace.focus.TakeFocus()
-		println("===3")
 	case proto.Deactivate:
 		if workspace.id != MaxWorkspaces {
 			workspace.Deactivate()
@@ -628,10 +639,10 @@ func NewWorkspaceManager(mainscr, auxscr xutil.Screen) *WorkspaceManager {
 	}
 
 	if mainscr.Id() == auxscr.Id() {
-		w := NewWorkspace(mailbox, input, nil, MaxWorkspaces, mainscr)
+		w := NewWorkspace(mailbox, input, nil, MaxWorkspaces-1, mainscr)
 		go w.Run()
 	} else {
-		w := NewWorkspace(mailbox, input, next, MaxWorkspaces, mainscr)
+		w := NewWorkspace(mailbox, input, next, MaxWorkspaces-1, mainscr)
 		go w.Run()
 		w = NewWorkspace(mailbox, next, nil, MaxWorkspaces, auxscr)
 		go w.Run()

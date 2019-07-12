@@ -159,6 +159,7 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
 			win.Deactivate(manager.Curr())
 			win.Activate(6)
+			manager.SetCurr(6)
 		}
 	case kbrd.XK_F7:
 		winActive := (key.State & xproto.ModMask4) != 0
@@ -187,6 +188,10 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 		if winActive && manager.Curr() != 9 {
 			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
 			win.Attach(9)
+		} else if !winActive {
+			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
+			win.Activate(9)
+			manager.SetCurr(9)
 		}
 	case kbrd.XK_Left:
 		winActive := (key.State & xproto.ModMask4) != 0
@@ -294,7 +299,8 @@ func main() {
 		log.Fatal(err)
 	}
 	if err := xproto.ChangeWindowAttributesChecked(
-		conn, root.Root, xproto.CwCursor, []uint32{uint32(cursor)},
+		conn, root.Root, xproto.CwBackPixel|xproto.CwCursor,
+		[]uint32{root.BlackPixel, uint32(cursor)},
 	).Check(); err != nil {
 		log.Fatal(err)
 	}

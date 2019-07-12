@@ -126,6 +126,15 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 
 	if err := xproto.GrabKeyChecked(
 		conn, false, xroot.Root,
+		uint16(0),
+		sym2code[kbrd.XK_F9], xproto.GrabModeAsync,
+		xproto.GrabModeAsync,
+	).Check(); err != nil {
+		log.Print(err)
+	}
+
+	if err := xproto.GrabKeyChecked(
+		conn, false, xroot.Root,
 		xproto.ModMask4,
 		sym2code[kbrd.XK_Left], xproto.GrabModeAsync,
 		xproto.GrabModeAsync,
@@ -318,11 +327,29 @@ func GetScreens(conn *xgb.Conn) (main Screen, aux Screen, err error) {
 	}
 
 	if nscreen == 1 {
-		main = Screen{int(r.ScreenInfo[0].Width), int(r.ScreenInfo[0].Height), 0}
+		main = Screen{
+			int(r.ScreenInfo[0].Width),
+			int(r.ScreenInfo[0].Height),
+			int(r.ScreenInfo[0].XOrg),
+			int(r.ScreenInfo[0].YOrg),
+			0,
+		}
 		aux = main
 	} else {
-		main = Screen{int(r.ScreenInfo[0].Width), int(r.ScreenInfo[0].Height), 0}
-		aux = Screen{int(r.ScreenInfo[nscreen-1].Width), int(r.ScreenInfo[nscreen-1].Height), 1}
+		main = Screen{
+			int(r.ScreenInfo[0].Width),
+			int(r.ScreenInfo[0].Height),
+			int(r.ScreenInfo[0].XOrg),
+			int(r.ScreenInfo[0].YOrg),
+			0,
+		}
+		aux = Screen{
+			int(r.ScreenInfo[nscreen-1].Width),
+			int(r.ScreenInfo[nscreen-1].Height),
+			int(r.ScreenInfo[nscreen-1].XOrg),
+			int(r.ScreenInfo[nscreen-1].YOrg),
+			1,
+		}
 	}
 
 	return main, aux, nil
