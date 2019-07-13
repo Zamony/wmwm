@@ -225,6 +225,17 @@ func (window *Window) CouldBeManaged() bool {
 	return true
 }
 
+func (window *Window) Defocus() error {
+	if window == nil {
+		return nil
+	}
+
+	return xproto.ChangeWindowAttributesChecked(
+		window.conn, xproto.Window(window.id),
+		xproto.CwBorderPixel, []uint32{0x000000},
+	).Check()
+}
+
 func (window *Window) TakeFocus() error {
 	if window == nil {
 		return nil
@@ -246,7 +257,15 @@ func (window *Window) TakeFocus() error {
 		}
 	}
 
-	err := xproto.SetInputFocusChecked(
+	err := xproto.ChangeWindowAttributesChecked(
+		window.conn, xproto.Window(window.id),
+		xproto.CwBorderPixel, []uint32{0x00ff00},
+	).Check()
+	if err != nil {
+		return err
+	}
+
+	err = xproto.SetInputFocusChecked(
 		window.conn, xproto.InputFocusPointerRoot,
 		xproto.Window(window.id), xproto.TimeCurrentTime,
 	).Check()
