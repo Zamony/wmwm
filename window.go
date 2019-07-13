@@ -52,6 +52,11 @@ func (window *Window) Activate(id uint32) {
 	window.mailbox <- msg
 }
 
+func (window *Window) DefocusWin(id uint32) {
+	msg := proto.Message{window.id, id, proto.Defocus, window.conn}
+	window.mailbox <- msg
+}
+
 func (window *Window) Remove() {
 	msg := proto.Message{window.id, 0, proto.Remove, window.conn}
 	window.mailbox <- msg

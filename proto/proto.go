@@ -15,6 +15,7 @@ const (
 	MoveRight
 	MoveUp
 	MoveDown
+	Defocus
 	FocusHere
 	FocusLeft
 	FocusRight

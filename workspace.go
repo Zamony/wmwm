@@ -77,6 +77,7 @@ func (workspace *Workspace) Run() {
 
 func (workspace *Workspace) handleMsg(msg proto.Message) {
 	workspace.PrintStatus()
+	println(msg.Type)
 	switch msg.Type {
 	case proto.Attach:
 		//println("ATTACH", msg.From)
@@ -116,6 +117,7 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
 			}()
 		}
 	case proto.Remove:
+		println("IM IN REMOVE", msg.From)
 		win := NewWindow(msg.From, workspace.headc, msg.XConn)
 		if win != nil && workspace.focus != nil {
 			if win.Id() == workspace.focus.Id() {
@@ -139,11 +141,13 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
 			log.Println("HAS WM_DELETE WINDOW")
 			win.CloseW()
 		}
+	case proto.Defocus:
+		workspace.Defocus()
 	case proto.FocusHere:
 		if workspace.focus.Id() != msg.From {
 			win := workspace.FindWindow(msg.From)
 			if win != nil {
-				win.Defocus()
+				workspace.focus.Defocus()
 				workspace.focus = win
 				workspace.focus.TakeFocus()
 			}
@@ -155,7 +159,6 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
 	case proto.FocusRight:
 		workspace.focus.Defocus()
 		workspace.focus = workspace.FocusRight()
-		println(workspace.focus.Id())
 		workspace.focus.TakeFocus()
 	case proto.FocusTop:
 		workspace.focus.Defocus()
@@ -172,6 +175,7 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
 	case proto.Deactivate:
 		if workspace.id != MaxWorkspaces {
 			workspace.Deactivate()
+			println("DEACTIVATE")
 		}
 	case proto.ResizeLeft:
 		// println("RESIZE LEFT", msg.From)
@@ -239,6 +243,9 @@ func (workspace *Workspace) CleanUp() {
 
 	if cleaned {
 		workspace.Reshape()
+		if workspace.focus != nil {
+			workspace.focus.TakeFocus()
+		}
 	}
 }
 
@@ -407,7 +414,7 @@ func (workspace *Workspace) Remove(window *Window) {
 	}
 }
 
-func (workspace *Workspace) BlackenFocus() {
+func (workspace *Workspace) Defocus() {
 	for i := 0; i < workspace.central.Len(); i++ {
 		win := workspace.central.WindowByIndex(i)
 		win.Defocus()
@@ -645,9 +652,11 @@ func (workspace *Workspace) Reshape() {
 }
 
 type WorkspaceManager struct {
-	curr         uint32
-	mailbox      chan proto.Message
-	primaryWidth int
+	prev        uint32
+	curr        uint32
+	mailbox     chan proto.Message
+	auxWidth    int
+	isDualSetup bool
 }
 
 func NewWorkspaceManager(mainscr, auxscr xutil.Screen) *WorkspaceManager {
@@ -662,25 +671,34 @@ func NewWorkspaceManager(mainscr, auxscr xutil.Screen) *WorkspaceManager {
 		next = make(chan proto.Message)
 	}
 
+	isDualSetup := false
 	if mainscr.Id() == auxscr.Id() {
 		w := NewWorkspace(mailbox, input, nil, MaxWorkspaces-1, mainscr)
 		go w.Run()
 	} else {
+		isDualSetup = true
 		w := NewWorkspace(mailbox, input, next, MaxWorkspaces-1, mainscr)
 		go w.Run()
 		w = NewWorkspace(mailbox, next, nil, MaxWorkspaces, auxscr)
 		go w.Run()
 	}
 
-	return &WorkspaceManager{DefaultWorkspace, mailbox, mainscr.Width()}
+	return &WorkspaceManager{
+		DefaultWorkspace, DefaultWorkspace,
+		mailbox, auxscr.Width(), isDualSetup,
+	}
 }
 
 func (wrkmgr *WorkspaceManager) Mailbox() chan proto.Message {
 	return wrkmgr.mailbox
 }
 
-func (wrkmgr WorkspaceManager) PrimaryWidth() int {
-	return wrkmgr.primaryWidth
+func (wrkmgr WorkspaceManager) AuxWidth() int {
+	return wrkmgr.auxWidth
+}
+
+func (wrkmgr WorkspaceManager) Prev() uint32 {
+	return wrkmgr.prev
 }
 
 func (wrkmgr *WorkspaceManager) Curr() uint32 {
@@ -688,5 +706,8 @@ func (wrkmgr *WorkspaceManager) Curr() uint32 {
 }
 
 func (wrkmgr *WorkspaceManager) SetCurr(n uint32) {
+	if wrkmgr.curr != n {
+		wrkmgr.prev = wrkmgr.curr
+	}
 	wrkmgr.curr = n
 }

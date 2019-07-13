@@ -61,6 +61,23 @@ eventloop:
 			log.Println(event)
 			if e.Child > 0 {
 				win := NewWindow(uint32(e.Child), manager.Mailbox(), conn)
+				if manager.isDualSetup {
+					rootAttr, err := xproto.GetGeometry(conn, xproto.Drawable(e.Root)).Reply()
+					if err != nil {
+						log.Fatal("Cannot get Root Geometry")
+					}
+					secondMonitor := int(e.RootX) > (int(rootAttr.Width) - manager.AuxWidth())
+					secondMonitorActive := manager.Curr() == MaxWorkspaces
+					switch {
+					case !secondMonitor && secondMonitorActive:
+						win.Activate(manager.Prev())
+						manager.SetCurr(manager.Prev())
+					case secondMonitor && !secondMonitorActive:
+						win.Activate(MaxWorkspaces)
+						manager.SetCurr(MaxWorkspaces)
+					}
+				}
+
 				win.FocusHere()
 			}
 			xproto.AllowEventsChecked(conn, xproto.AllowReplayPointer, e.Time)
