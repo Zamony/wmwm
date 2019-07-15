@@ -1,10 +1,9 @@
 package main
 
 import (
-    "fmt"
-
     "github.com/Zamony/wm/proto"
     "github.com/Zamony/wm/xutil"
+    "github.com/Zamony/wm/logging"
 )
 
 const (
@@ -75,7 +74,7 @@ func (workspace *Workspace) Run() {
 }
 
 func (workspace *Workspace) handleMsg(msg proto.Message) {
-    workspace.PrintStatus()
+    workspace.LogStatus()
     switch msg.Type {
     case proto.Reattach:
         win := NewWindow(workspace.id, workspace.headc, msg.XConn)
@@ -170,8 +169,10 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
         }
     case proto.ResizeLeft:
         workspace.ResizeLeft(msg.From)
+        workspace.Focus()
     case proto.ResizeRight:
         workspace.ResizeRight(msg.From)
+        workspace.Focus()
     case proto.MoveUp:
         workspace.MoveUp(workspace.focus.Id())
         workspace.Reshape()
@@ -191,8 +192,8 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
     default:
         return
     }
-    workspace.PrintStatus()
-    println("------------------------")
+    workspace.LogStatus()
+    logging.Println("------------------------")
 }
 
 func (workspace *Workspace) CleanUp() {
@@ -523,21 +524,21 @@ func (workspace *Workspace) FocusRight() *Window {
     return workspace.right.WindowByIndex(0)
 }
 
-func (workspace *Workspace) PrintStatus() {
-    fmt.Print("Workspace ID", workspace.id, " ")
+func (workspace *Workspace) LogStatus() {
+    logging.Print("Workspace ID", workspace.id, " ")
     if workspace.focus != nil {
-        fmt.Println("focus = ", workspace.focus.Id())
+        logging.Println("focus = ", workspace.focus.Id())
     } else {
-        fmt.Println("focus = nil")
+        logging.Println("focus = nil")
     }
 
-    fmt.Printf("Central ")
-    workspace.central.PrintStatus()
-    fmt.Printf("Left ")
-    workspace.left.PrintStatus()
-    fmt.Printf("Right ")
-    workspace.right.PrintStatus()
-    fmt.Printf("\n\n")
+    logging.Println("Central ")
+    workspace.central.LogStatus()
+    logging.Println("Left ")
+    workspace.left.LogStatus()
+    logging.Println("Right ")
+    workspace.right.LogStatus()
+    logging.Print("\n\n")
 }
 
 func (workspace *Workspace) Activate() {

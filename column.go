@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/Zamony/wm/xutil"
+	"github.com/Zamony/wm/logging"
 )
 
 type Column struct {
@@ -117,9 +118,9 @@ func (column *Column) SetWidth20() int {
 	return column.width
 }
 
-func (column Column) PrintStatus() {
-	println("(X:", column.x, "W:", column.width, ")")
+func (column Column) LogStatus() {
+	logging.Println("(X:", column.x, "W:", column.width, ")")
 	for _, win := range column.windows {
-		win.PrintStatus()
+		win.LogStatus()
 	}
 }

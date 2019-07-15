@@ -4,12 +4,14 @@ import (
 	"errors"
 	"log"
 	"os/exec"
+	"flag"
 
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xinerama"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/Zamony/wm/kbrd"
 	"github.com/Zamony/wm/xutil"
+	"github.com/Zamony/wm/logging"
 )
 
 func processEvents(
@@ -20,13 +22,12 @@ eventloop:
 	for {
 		event, err := conn.WaitForEvent()
 		if err != nil {
-			log.Println(err)
+			logging.Println(err)
 			continue
 		}
 
 		switch e := event.(type) {
 		case xproto.KeyPressEvent:
-			// log.Println(event)
 			err := handleKeyPress(
 				conn, event.(xproto.KeyPressEvent), keymap, manager,
 			)
@@ -34,7 +35,7 @@ eventloop:
 				break eventloop
 			}
 		case xproto.ConfigureRequestEvent:
-			log.Println(event)
+			logging.Println(event)
 			ev := xproto.ConfigureNotifyEvent{
 				Event:            e.Window,
 				Window:           e.Window,
@@ -51,7 +52,7 @@ eventloop:
 				string(ev.Bytes()),
 			)
 		case xproto.MapRequestEvent:
-			log.Println(event)
+			logging.Println(event)
 			wattr, err := xproto.GetWindowAttributes(conn, e.Window).Reply()
 			if err != nil || !wattr.OverrideRedirect {
 				win := NewWindow(uint32(e.Window), manager.Mailbox(), conn)
@@ -59,11 +60,11 @@ eventloop:
 				win.SendActivate(manager.Curr())
 			}
 		case xproto.DestroyNotifyEvent:
-			log.Println(event)
+			logging.Println(event)
 			win := NewWindow(uint32(e.Window), manager.Mailbox(), conn)
 			win.SendRemove()
 		case xproto.ButtonPressEvent:
-			log.Println(event)
+			logging.Println(event)
 			if e.Child > 0 {
 				win := NewWindow(uint32(e.Child), manager.Mailbox(), conn)
 				if monitors.IsDualSetup() {
@@ -84,7 +85,7 @@ eventloop:
 			xproto.AllowEventsChecked(conn, xproto.AllowReplayPointer, e.Time)
 			xproto.AllowEventsChecked(conn, xproto.AllowReplayKeyboard, e.Time)
 		default:
-			log.Println(event)
+			logging.Println(event)
 		}
 	}
 }
@@ -217,6 +218,12 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 }
 
 func main() {
+	flag.BoolVar(
+		&logging.Debug, "debug", false,
+		"Outputs debug information to Stderr"
+	)
+	flag.Parse()
+	
 	conn, err := xgb.NewConn()
 	if err != nil {
 		log.Fatal(err)
@@ -253,7 +260,7 @@ func main() {
 	}
 
 	if err := xutil.BecomeWM(conn, root); err != nil {
-		log.Println(err)
+		logging.Println(err)
 		log.Fatal("Cannot take WM ownership")
 	}
 
