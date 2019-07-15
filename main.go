@@ -12,7 +12,10 @@ import (
 	"github.com/Zamony/wm/xutil"
 )
 
-func processEvents(conn *xgb.Conn, keymap [256][]xproto.Keysym, manager *WorkspaceManager) {
+func processEvents(
+	conn *xgb.Conn, keymap [256][]xproto.Keysym,
+	monitors xutil.MonitorsInfo, manager *WorkspaceManager,
+) {
 eventloop:
 	for {
 		event, err := conn.WaitForEvent()
@@ -23,8 +26,10 @@ eventloop:
 
 		switch e := event.(type) {
 		case xproto.KeyPressEvent:
-			log.Println(event)
-			err := handleKeyPress(conn, event.(xproto.KeyPressEvent), keymap, manager)
+			// log.Println(event)
+			err := handleKeyPress(
+				conn, event.(xproto.KeyPressEvent), keymap, manager,
+			)
 			if err != nil {
 				break eventloop
 			}
@@ -41,44 +46,40 @@ eventloop:
 				BorderWidth:      0,
 				OverrideRedirect: false,
 			}
-			xproto.SendEventChecked(conn, false, e.Window, xproto.EventMaskStructureNotify, string(ev.Bytes()))
+			xproto.SendEventChecked(
+				conn, false, e.Window, xproto.EventMaskStructureNotify,
+				string(ev.Bytes()),
+			)
 		case xproto.MapRequestEvent:
 			log.Println(event)
 			wattr, err := xproto.GetWindowAttributes(conn, e.Window).Reply()
 			if err != nil || !wattr.OverrideRedirect {
-				log.Println("HAS NO OVERRIDEREDIRECT", e.Window)
 				win := NewWindow(uint32(e.Window), manager.Mailbox(), conn)
-				win.Reattach(manager.Curr())
-				win.Activate(manager.Curr())
-			} else {
-				log.Println("HAS OVERRIDEREDIRECT", e.Window)
+				win.SendAttach(manager.Curr())
+				win.SendActivate(manager.Curr())
 			}
 		case xproto.DestroyNotifyEvent:
 			log.Println(event)
 			win := NewWindow(uint32(e.Window), manager.Mailbox(), conn)
-			win.Remove()
+			win.SendRemove()
 		case xproto.ButtonPressEvent:
 			log.Println(event)
 			if e.Child > 0 {
 				win := NewWindow(uint32(e.Child), manager.Mailbox(), conn)
-				if manager.isDualSetup {
-					rootAttr, err := xproto.GetGeometry(conn, xproto.Drawable(e.Root)).Reply()
-					if err != nil {
-						log.Fatal("Cannot get Root Geometry")
-					}
-					secondMonitor := int(e.RootX) > (int(rootAttr.Width) - manager.AuxWidth())
-					secondMonitorActive := manager.Curr() == MaxWorkspaces
+				if monitors.IsDualSetup() {
+					secondMonitorClick := !monitors.InPrimaryRegion(int(e.RootX))
+					secondMonitorActive := manager.Curr() == manager.SpecialWorkspace()
 					switch {
-					case !secondMonitor && secondMonitorActive:
-						win.Activate(manager.Prev())
+					case !secondMonitorClick && secondMonitorActive:
+						win.SendActivate(manager.Prev())
 						manager.SetCurr(manager.Prev())
-					case secondMonitor && !secondMonitorActive:
-						win.Activate(MaxWorkspaces)
-						manager.SetCurr(MaxWorkspaces)
+					case secondMonitorClick && !secondMonitorActive:
+						win.SendActivate(manager.SpecialWorkspace())
+						manager.SetCurr(manager.SpecialWorkspace())
 					}
 				}
 
-				win.FocusHere()
+				win.SendFocusHere()
 			}
 			xproto.AllowEventsChecked(conn, xproto.AllowReplayPointer, e.Time)
 			xproto.AllowEventsChecked(conn, xproto.AllowReplayKeyboard, e.Time)
@@ -90,7 +91,10 @@ eventloop:
 
 func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xproto.Keysym, manager *WorkspaceManager) error {
 	keysym := keymap[key.Detail][0]
-
+	fkeys := map[xproto.Keysym]uint32{
+		kbrd.XK_F1: 1, kbrd.XK_F2: 2, kbrd.XK_F3: 3, kbrd.XK_F4: 4,
+		kbrd.XK_F5: 5, kbrd.XK_F6: 6, kbrd.XK_F7: 7, kbrd.XK_F8: 8, kbrd.XK_F9: 9,
+	}
 	switch keysym {
 	case kbrd.XK_BackSpace:
 		ctrlActive := (key.State & xproto.ModMaskControl) != 0
@@ -112,103 +116,20 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 			}
 		}
 		return nil
-	case kbrd.XK_F1:
+	case kbrd.XK_F1, kbrd.XK_F2, kbrd.XK_F3, kbrd.XK_F4, kbrd.XK_F5:
+		fallthrough
+	case kbrd.XK_F6, kbrd.XK_F7, kbrd.XK_F8, kbrd.XK_F9:
 		winActive := (key.State & xproto.ModMask4) != 0
-		if winActive && manager.Curr() != 1 {
+		if winActive && manager.Curr() != fkeys[keysym] {
 			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
-			win.Attach(1)
+			win.SendReattach(fkeys[keysym])
 		} else if !winActive {
 			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.Deactivate(manager.Curr())
-			win.Activate(1)
-			manager.SetCurr(1)
-		}
-	case kbrd.XK_F2:
-		winActive := (key.State & xproto.ModMask4) != 0
-		if winActive && manager.Curr() != 2 {
-			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
-			win.Attach(2)
-		} else if !winActive {
-			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.Deactivate(manager.Curr())
-			win.Activate(2)
-			manager.SetCurr(2)
-		}
-	case kbrd.XK_F3:
-		winActive := (key.State & xproto.ModMask4) != 0
-		if winActive && manager.Curr() != 3 {
-			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
-			win.Attach(3)
-		} else if !winActive {
-			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.Deactivate(manager.Curr())
-			win.Activate(3)
-			manager.SetCurr(3)
-		}
-	case kbrd.XK_F4:
-		winActive := (key.State & xproto.ModMask4) != 0
-		if winActive && manager.Curr() != 4 {
-			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
-			win.Attach(4)
-		} else if !winActive {
-			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.Deactivate(manager.Curr())
-			win.Activate(4)
-			manager.SetCurr(4)
-		}
-	case kbrd.XK_F5:
-		winActive := (key.State & xproto.ModMask4) != 0
-		if winActive && manager.Curr() != 5 {
-			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
-			win.Attach(5)
-		} else if !winActive {
-			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.Deactivate(manager.Curr())
-			win.Activate(5)
-			manager.SetCurr(5)
-		}
-	case kbrd.XK_F6:
-		winActive := (key.State & xproto.ModMask4) != 0
-		if winActive && manager.Curr() != 6 {
-			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
-			win.Attach(6)
-		} else if !winActive {
-			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.Deactivate(manager.Curr())
-			win.Activate(6)
-			manager.SetCurr(6)
-		}
-	case kbrd.XK_F7:
-		winActive := (key.State & xproto.ModMask4) != 0
-		if winActive && manager.Curr() != 7 {
-			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
-			win.Attach(7)
-		} else if !winActive {
-			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.Deactivate(manager.Curr())
-			win.Activate(7)
-			manager.SetCurr(7)
-		}
-	case kbrd.XK_F8:
-		winActive := (key.State & xproto.ModMask4) != 0
-		if winActive && manager.Curr() != 8 {
-			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
-			win.Attach(8)
-		} else if !winActive {
-			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.Deactivate(manager.Curr())
-			win.Activate(8)
-			manager.SetCurr(8)
-		}
-	case kbrd.XK_F9:
-		winActive := (key.State & xproto.ModMask4) != 0
-		if winActive && manager.Curr() != 9 {
-			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
-			win.Attach(9)
-		} else if !winActive {
-			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
-			win.Activate(9)
-			manager.SetCurr(9)
+			if fkeys[keysym] != manager.SpecialWorkspace() {
+				win.SendDeactivate(manager.Curr())
+			}
+			win.SendActivate(fkeys[keysym])
+			manager.SetCurr(fkeys[keysym])
 		}
 	case kbrd.XK_Left:
 		winActive := (key.State & xproto.ModMask4) != 0
@@ -216,17 +137,17 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 		altActive := (key.State & xproto.ModMask1) != 0
 		if winActive && ctrlActive && !altActive {
 			win := NewWindow(uint32(key.Child), manager.Mailbox(), conn)
-			win.ResizeLeft(manager.Curr())
+			win.SendResizeLeft(manager.Curr())
 		}
 
 		if winActive && !ctrlActive && !altActive {
 			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.FocusLeft(manager.Curr())
+			win.SendFocusLeft(manager.Curr())
 		}
 
 		if winActive && !ctrlActive && altActive {
 			win := NewWindow(uint32(key.Child), manager.Mailbox(), conn)
-			win.MoveLeft()
+			win.SendMoveLeft()
 		}
 
 	case kbrd.XK_Right:
@@ -235,29 +156,29 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 		altActive := (key.State & xproto.ModMask1) != 0
 		if winActive && ctrlActive && !altActive {
 			win := NewWindow(uint32(key.Child), manager.Mailbox(), conn)
-			win.ResizeRight(manager.Curr())
+			win.SendResizeRight(manager.Curr())
 		}
 
 		if winActive && !ctrlActive && !altActive {
 			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.FocusRight(manager.Curr())
+			win.SendFocusRight(manager.Curr())
 		}
 
 		if winActive && !ctrlActive && altActive {
 			win := NewWindow(uint32(key.Child), manager.Mailbox(), conn)
-			win.MoveRight()
+			win.SendMoveRight()
 		}
 	case kbrd.XK_Up:
 		winActive := (key.State & xproto.ModMask4) != 0
 		altActive := (key.State & xproto.ModMask1) != 0
 		if winActive && !altActive {
 			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.FocusTop(manager.Curr())
+			win.SendFocusUp(manager.Curr())
 		}
 
 		if winActive && altActive {
 			win := NewWindow(uint32(key.Child), manager.Mailbox(), conn)
-			win.MoveUp()
+			win.SendMoveUp()
 		}
 
 	case kbrd.XK_Down:
@@ -265,17 +186,17 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 		altActive := (key.State & xproto.ModMask1) != 0
 		if winActive && !altActive {
 			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.FocusBottom(manager.Curr())
+			win.SendFocusDown(manager.Curr())
 		}
 		if winActive && altActive {
 			win := NewWindow(uint32(key.Child), manager.Mailbox(), conn)
-			win.MoveDown()
+			win.SendMoveDown()
 		}
 	case kbrd.XK_q:
 		winActive := (key.State & xproto.ModMask4) != 0
 		if winActive {
 			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			win.Close(manager.Curr())
+			win.SendClose(manager.Curr())
 		}
 	case kbrd.XK_grave:
 		winActive := (key.State & xproto.ModMask4) != 0
@@ -317,7 +238,7 @@ func main() {
 	}
 	if err := xproto.ChangeWindowAttributesChecked(
 		conn, root.Root, xproto.CwBackPixel|xproto.CwCursor,
-		[]uint32{root.BlackPixel, uint32(cursor)},
+		[]uint32{uint32(0x008000), uint32(cursor)},
 	).Check(); err != nil {
 		log.Fatal(err)
 	}
@@ -326,7 +247,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	mainscr, auxscr, err := xutil.GetScreens(conn)
+	monitors, err := xutil.ReadMonitorsInfo(conn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -343,7 +264,7 @@ func main() {
 
 	xutil.GrabMouse(conn, root)
 	xutil.GrabShortcuts(conn, root, keymap)
-	manager := NewWorkspaceManager(mainscr, auxscr)
+	manager := NewWorkspaceManager(monitors)
 
-	processEvents(conn, keymap, manager)
+	processEvents(conn, keymap, monitors, manager)
 }

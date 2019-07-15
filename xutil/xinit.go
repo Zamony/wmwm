@@ -1,14 +1,17 @@
 package xutil
 
 import (
-	"errors"
 	"log"
 
 	"github.com/BurntSushi/xgb"
-	"github.com/BurntSushi/xgb/xinerama"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/Zamony/wm/kbrd"
 )
+
+type Shortcut struct {
+	Modifiers uint16
+	Keycode   xproto.Keycode
+}
 
 func BecomeWM(conn *xgb.Conn, xroot xproto.ScreenInfo) error {
 	mask := []uint32{
@@ -44,266 +47,44 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 		}
 	}
 
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_t], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
+	shortcuts := []Shortcut{
+		{xproto.ModMask4, sym2code[kbrd.XK_t]},
+		{xproto.ModMask4, sym2code[kbrd.XK_q]},
+		{xproto.ModMask4, sym2code[kbrd.XK_grave]},
+		{uint16(0), sym2code[kbrd.XK_F1]},
+		{uint16(0), sym2code[kbrd.XK_F2]}, {uint16(0), sym2code[kbrd.XK_F3]},
+		{uint16(0), sym2code[kbrd.XK_F4]}, {uint16(0), sym2code[kbrd.XK_F5]},
+		{uint16(0), sym2code[kbrd.XK_F6]}, {uint16(0), sym2code[kbrd.XK_F7]},
+		{uint16(0), sym2code[kbrd.XK_F8]}, {uint16(0), sym2code[kbrd.XK_F9]},
+		{xproto.ModMask4, sym2code[kbrd.XK_Left]},
+		{xproto.ModMask4, sym2code[kbrd.XK_Right]},
+		{xproto.ModMask4, sym2code[kbrd.XK_Up]},
+		{xproto.ModMask4, sym2code[kbrd.XK_Down]},
+		{xproto.ModMaskControl | xproto.ModMask4, sym2code[kbrd.XK_Left]},
+		{xproto.ModMaskControl | xproto.ModMask4, sym2code[kbrd.XK_Right]},
+		{xproto.ModMask4 | xproto.ModMask1, sym2code[kbrd.XK_Up]},
+		{xproto.ModMask4 | xproto.ModMask1, sym2code[kbrd.XK_Down]},
+		{xproto.ModMask4 | xproto.ModMask1, sym2code[kbrd.XK_Left]},
+		{xproto.ModMask4 | xproto.ModMask1, sym2code[kbrd.XK_Right]},
+		{xproto.ModMask4, sym2code[kbrd.XK_F1]},
+		{xproto.ModMask4, sym2code[kbrd.XK_F2]},
+		{xproto.ModMask4, sym2code[kbrd.XK_F3]},
+		{xproto.ModMask4, sym2code[kbrd.XK_F4]},
+		{xproto.ModMask4, sym2code[kbrd.XK_F5]},
+		{xproto.ModMask4, sym2code[kbrd.XK_F6]},
+		{xproto.ModMask4, sym2code[kbrd.XK_F7]},
+		{xproto.ModMask4, sym2code[kbrd.XK_F8]},
+		{xproto.ModMask4, sym2code[kbrd.XK_F9]},
 	}
 
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		uint16(0),
-		sym2code[kbrd.XK_F1], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		uint16(0),
-		sym2code[kbrd.XK_F2], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		uint16(0),
-		sym2code[kbrd.XK_F3], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		uint16(0),
-		sym2code[kbrd.XK_F4], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		uint16(0),
-		sym2code[kbrd.XK_F5], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		uint16(0),
-		sym2code[kbrd.XK_F6], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		uint16(0),
-		sym2code[kbrd.XK_F7], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		uint16(0),
-		sym2code[kbrd.XK_F8], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		uint16(0),
-		sym2code[kbrd.XK_F9], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_Left], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_Right], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_Up], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_Down], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_q], xproto.GrabModeAsync,
-		xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMaskControl|xproto.ModMask4,
-		sym2code[kbrd.XK_Left], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMaskControl|xproto.ModMask4,
-		sym2code[kbrd.XK_Right], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4|xproto.ModMask1,
-		sym2code[kbrd.XK_Up], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4|xproto.ModMask1,
-		sym2code[kbrd.XK_Down], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4|xproto.ModMask1,
-		sym2code[kbrd.XK_Left], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4|xproto.ModMask1,
-		sym2code[kbrd.XK_Right], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_F1], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_F2], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_F3], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_F4], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_F5], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_F6], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_F7], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_F8], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_F9], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
-	}
-
-	if err := xproto.GrabKeyChecked(
-		conn, false, xroot.Root,
-		xproto.ModMask4,
-		sym2code[kbrd.XK_grave], xproto.GrabModeAsync, xproto.GrabModeAsync,
-	).Check(); err != nil {
-		log.Print(err)
+	for _, shortcut := range shortcuts {
+		err := xproto.GrabKeyChecked(
+			conn, false, xroot.Root, shortcut.Modifiers,
+			shortcut.Keycode, xproto.GrabModeAsync, xproto.GrabModeAsync,
+		).Check()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
@@ -313,46 +94,6 @@ func GrabMouse(conn *xgb.Conn, xroot xproto.ScreenInfo) error {
 		xproto.GrabModeSync, xproto.GrabModeSync, xproto.WindowNone,
 		xproto.CursorNone, xproto.ButtonIndex1, xproto.ModMaskAny,
 	).Check()
-}
-
-func GetScreens(conn *xgb.Conn) (main Screen, aux Screen, err error) {
-	r, err := xinerama.QueryScreens(conn).Reply()
-	if err != nil {
-		return main, aux, err
-	}
-
-	nscreen := len(r.ScreenInfo)
-	if nscreen < 1 {
-		return main, aux, errors.New("No screen info available")
-	}
-
-	if nscreen == 1 {
-		main = Screen{
-			int(r.ScreenInfo[0].Width),
-			int(r.ScreenInfo[0].Height),
-			int(r.ScreenInfo[0].XOrg),
-			int(r.ScreenInfo[0].YOrg),
-			0,
-		}
-		aux = main
-	} else {
-		main = Screen{
-			int(r.ScreenInfo[0].Width),
-			int(r.ScreenInfo[0].Height),
-			int(r.ScreenInfo[0].XOrg),
-			int(r.ScreenInfo[0].YOrg),
-			0,
-		}
-		aux = Screen{
-			int(r.ScreenInfo[nscreen-1].Width),
-			int(r.ScreenInfo[nscreen-1].Height),
-			int(r.ScreenInfo[nscreen-1].XOrg),
-			int(r.ScreenInfo[nscreen-1].YOrg),
-			1,
-		}
-	}
-
-	return main, aux, nil
 }
 
 func CreateCursor(conn *xgb.Conn) (xproto.Cursor, error) {

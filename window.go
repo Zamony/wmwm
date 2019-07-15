@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/Zamony/wm/proto"
@@ -27,161 +25,153 @@ func (window *Window) Id() uint32 {
 	return window.id
 }
 
-func (window *Window) Attach(to uint32) {
+func (window *Window) SendAttach(to uint32) {
 	msg := proto.Message{window.id, to, proto.Attach, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) Detach(to uint32) {
+func (window *Window) SendDetach(to uint32) {
 	msg := proto.Message{window.id, to, proto.Detach, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) Reattach(to uint32) {
+func (window *Window) SendReattach(to uint32) {
 	msg := proto.Message{window.id, to, proto.Reattach, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) Deactivate(to uint32) {
+func (window *Window) SendDeactivate(to uint32) {
 	msg := proto.Message{window.id, to, proto.Deactivate, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) Activate(id uint32) {
+func (window *Window) SendActivate(id uint32) {
 	msg := proto.Message{window.id, id, proto.Activate, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) DefocusWin(id uint32) {
-	msg := proto.Message{window.id, id, proto.Defocus, window.conn}
-	window.mailbox <- msg
-}
-
-func (window *Window) Remove() {
+func (window *Window) SendRemove() {
 	msg := proto.Message{window.id, 0, proto.Remove, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) MoveLeft() {
+func (window *Window) SendMoveLeft() {
 	msg := proto.Message{window.id, 0, proto.MoveLeft, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) MoveRight() {
+func (window *Window) SendMoveRight() {
 	msg := proto.Message{window.id, 0, proto.MoveRight, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) MoveUp() {
+func (window *Window) SendMoveUp() {
 	msg := proto.Message{window.id, 0, proto.MoveUp, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) MoveDown() {
+func (window *Window) SendMoveDown() {
 	msg := proto.Message{window.id, 0, proto.MoveDown, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) Close(id uint32) {
+func (window *Window) SendClose(id uint32) {
 	msg := proto.Message{window.id, id, proto.Close, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) Exit() {
+func (window *Window) SendExit() {
 	msg := proto.Message{window.id, 0, proto.Exit, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) FocusHere() {
+func (window *Window) SendFocusHere() {
 	msg := proto.Message{window.id, 0, proto.FocusHere, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) FocusLeft(id uint32) {
+func (window *Window) SendFocusLeft(id uint32) {
 	msg := proto.Message{window.id, id, proto.FocusLeft, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) FocusRight(id uint32) {
+func (window *Window) SendFocusRight(id uint32) {
 	msg := proto.Message{window.id, id, proto.FocusRight, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) FocusTop(id uint32) {
-	msg := proto.Message{window.id, id, proto.FocusTop, window.conn}
+func (window *Window) SendFocusUp(id uint32) {
+	msg := proto.Message{window.id, id, proto.FocusUp, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) FocusBottom(id uint32) {
-	msg := proto.Message{window.id, id, proto.FocusBottom, window.conn}
+func (window *Window) SendFocusDown(id uint32) {
+	msg := proto.Message{window.id, id, proto.FocusDown, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) ResizeLeft(id uint32) {
+func (window *Window) SendResizeLeft(id uint32) {
 	msg := proto.Message{window.id, id, proto.ResizeLeft, window.conn}
 	window.mailbox <- msg
 }
 
-func (window *Window) ResizeRight(id uint32) {
+func (window *Window) SendResizeRight(id uint32) {
 	msg := proto.Message{window.id, id, proto.ResizeRight, window.conn}
 	window.mailbox <- msg
 }
 
 func (window *Window) SetX(x int) error {
+	window.x = x
 	err := xproto.ConfigureWindowChecked(
 		window.conn, xproto.Window(window.id),
 		xproto.ConfigWindowX, []uint32{uint32(x)},
 	).Check()
-	window.x = x
-	if err != nil {
-		log.Fatal(err)
-	}
 	return err
 }
 
 func (window *Window) SetY(y int) error {
+	window.y = y
 	err := xproto.ConfigureWindowChecked(
 		window.conn, xproto.Window(window.id),
 		xproto.ConfigWindowY, []uint32{uint32(y)},
 	).Check()
-	window.y = y
-	if err != nil {
-		log.Fatal(err)
-	}
 	return err
 }
 
 func (window *Window) SetWidth(w int) error {
+	window.width = w
 	err := xproto.ConfigureWindowChecked(
 		window.conn, xproto.Window(window.id),
 		xproto.ConfigWindowWidth, []uint32{uint32(w)},
 	).Check()
-	window.width = w
-	if err != nil {
-		log.Fatal(err)
-	}
 	return err
 }
 
 func (window *Window) SetHeight(h int) error {
+	window.height = h
 	err := xproto.ConfigureWindowChecked(
 		window.conn, xproto.Window(window.id),
 		xproto.ConfigWindowHeight, []uint32{uint32(h)},
 	).Check()
-	window.height = h
-	if err != nil {
-		log.Fatal(err)
-	}
 	return err
 }
 
-func (window *Window) MapW() error {
+func (window *Window) Map() error {
 	err := xproto.MapWindowChecked(
 		window.conn, xproto.Window(window.id),
 	).Check()
 	if err != nil {
 		return err
 	}
+
+	err = xproto.ConfigureWindowChecked(
+		window.conn, xproto.Window(window.id),
+		xproto.ConfigWindowBorderWidth, []uint32{uint32(0)},
+	).Check()
+	if err != nil {
+		return err
+	}
+
 	err = xproto.ChangeWindowAttributesChecked(
 		window.conn, xproto.Window(window.id),
 		xproto.CwEventMask, []uint32{
@@ -191,19 +181,14 @@ func (window *Window) MapW() error {
 	return err
 }
 
-func (window *Window) UnmapW() error {
+func (window *Window) Unmap() error {
 	err := xproto.UnmapWindowChecked(
 		window.conn, xproto.Window(window.id),
 	).Check()
 	return err
 }
 
-func (window *Window) CloseW() error {
-	// if !xutil.HasAtomDefined("WM_DELETE_WINDOW", window.id, window.conn) {
-	// 	err :=
-	// 	return err
-	// }
-
+func (window *Window) Close() error {
 	return xutil.SendClientEvent(
 		"WM_DELETE_WINDOW",
 		xproto.TimeCurrentTime,
@@ -212,8 +197,12 @@ func (window *Window) CloseW() error {
 	)
 }
 
-func (window *Window) DestroyW() error {
+func (window *Window) Destroy() error {
 	return xproto.DestroyWindowChecked(window.conn, xproto.Window(window.id)).Check()
+}
+
+func (window *Window) CouldBeDestroyed() bool {
+	return !xutil.HasAtomDefined("WM_DELETE_WINDOW", window.id, window.conn)
 }
 
 func (window *Window) CouldBeManaged() bool {
@@ -235,9 +224,25 @@ func (window *Window) Defocus() error {
 		return nil
 	}
 
-	return xproto.ChangeWindowAttributesChecked(
+	return window.UnsetBorder()
+}
+
+func (window *Window) UnsetBorder() error {
+	return xproto.ConfigureWindowChecked(
 		window.conn, xproto.Window(window.id),
-		xproto.CwBorderPixel, []uint32{0x000000},
+		xproto.ConfigWindowY|xproto.ConfigWindowHeight,
+		[]uint32{uint32(window.y - 2), uint32(window.height + 2)},
+	).Check()
+}
+
+func (window *Window) SetBorder() error {
+	return xproto.ConfigureWindowChecked(
+		window.conn, xproto.Window(window.id),
+		xproto.ConfigWindowY|xproto.ConfigWindowHeight,
+		[]uint32{
+			uint32(window.y + 2),
+			uint32(window.height - 2),
+		},
 	).Check()
 }
 
@@ -250,7 +255,6 @@ func (window *Window) TakeFocus() error {
 		timepoint--
 	}
 	if xutil.HasAtomDefined("WM_TAKE_FOCUS", window.id, window.conn) {
-		println("HAS WM_TAKE_FOCUS")
 		err := xutil.SendClientEvent(
 			"WM_TAKE_FOCUS",
 			timepoint,
@@ -262,19 +266,14 @@ func (window *Window) TakeFocus() error {
 		}
 	}
 
-	err := xproto.ChangeWindowAttributesChecked(
-		window.conn, xproto.Window(window.id),
-		xproto.CwBorderPixel, []uint32{0x00ff00},
-	).Check()
-	if err != nil {
+	if err := window.SetBorder(); err != nil {
 		return err
 	}
 
-	err = xproto.SetInputFocusChecked(
+	return xproto.SetInputFocusChecked(
 		window.conn, xproto.InputFocusPointerRoot,
 		xproto.Window(window.id), xproto.TimeCurrentTime,
 	).Check()
-	return err
 }
 
 func (window Window) PrintStatus() {

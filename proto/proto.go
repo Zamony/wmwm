@@ -15,15 +15,11 @@ const (
 	MoveRight
 	MoveUp
 	MoveDown
-	Defocus
 	FocusHere
 	FocusLeft
 	FocusRight
-	FocusTop
-	FocusBottom
-	SetLayoutFull
-	SetLayoutEqual
-	SetLayoutPareto
+	FocusUp
+	FocusDown
 	ResizeLeft
 	ResizeRight
 	Close
