@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
+	"github.com/Zamony/wm/logging"
 	"github.com/Zamony/wm/proto"
 	"github.com/Zamony/wm/xutil"
-	"github.com/Zamony/wm/logging"
 )
 
 type Window struct {
@@ -275,6 +275,10 @@ func (window *Window) TakeFocus() error {
 		window.conn, xproto.InputFocusPointerRoot,
 		xproto.Window(window.id), xproto.TimeCurrentTime,
 	).Check()
+}
+
+func (window Window) IsDock() bool {
+	return xutil.IsDock(window.Id(), window.conn)
 }
 
 func (window Window) LogStatus() {

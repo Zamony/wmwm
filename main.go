@@ -2,16 +2,17 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"log"
 	"os/exec"
-	"flag"
+	"time"
 
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xinerama"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/Zamony/wm/kbrd"
-	"github.com/Zamony/wm/xutil"
 	"github.com/Zamony/wm/logging"
+	"github.com/Zamony/wm/xutil"
 )
 
 func processEvents(
@@ -220,10 +221,10 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 func main() {
 	flag.BoolVar(
 		&logging.Debug, "debug", false,
-		"Outputs debug information to Stderr"
+		"Outputs debug information to Stderr",
 	)
 	flag.Parse()
-	
+
 	conn, err := xgb.NewConn()
 	if err != nil {
 		log.Fatal(err)
@@ -257,6 +258,10 @@ func main() {
 	monitors, err := xutil.ReadMonitorsInfo(conn)
 	if err != nil {
 		log.Fatal(err)
+	} else if monitors.IsDualSetup() {
+		xutil.SetNumberOfDesktops(MaxWorkspaces, conn)
+	} else {
+		xutil.SetNumberOfDesktops(MaxWorkspaces-1, conn)
 	}
 
 	if err := xutil.BecomeWM(conn, root); err != nil {
@@ -271,7 +276,14 @@ func main() {
 
 	xutil.GrabMouse(conn, root)
 	xutil.GrabShortcuts(conn, root, keymap)
+	xutil.SetSupported(conn) // Set EWMH supported atoms
 	manager := NewWorkspaceManager(monitors)
 
+	cmd := exec.Command("tint2")
+	cmd.Start()
+	go func() {
+		time.Sleep(1)
+		cmd.Wait()
+	}()
 	processEvents(conn, keymap, monitors, manager)
 }

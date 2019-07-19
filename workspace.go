@@ -1,6 +1,9 @@
 package main
 
 import (
+    "fmt"
+
+	"github.com/BurntSushi/xgb"
     "github.com/Zamony/wm/proto"
     "github.com/Zamony/wm/xutil"
     "github.com/Zamony/wm/logging"
@@ -28,6 +31,7 @@ type Workspace struct {
     id      uint32
     layout  int
     focus   *Window
+    conn    *xgb.Conn
 }
 
 func NewWorkspace(headc, input, next chan proto.Message, id uint32, screen xutil.Screen) *Workspace {
@@ -41,12 +45,16 @@ func NewWorkspace(headc, input, next chan proto.Message, id uint32, screen xutil
         id:      id,
         layout:  LayoutFull,
         focus:   nil,
+        conn:    nil,
     }
 }
 
 func (workspace *Workspace) Run() {
     for {
         msg := <-workspace.input
+        if workspace.conn == nil {
+            workspace.conn = msg.XConn
+        }
         switch msg.To {
         case uint32(0):
             // Broadcast
@@ -81,6 +89,10 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
         go func() { win.SendDetach(msg.From) }()
     case proto.Attach:
         win := NewWindow(msg.From, workspace.headc, msg.XConn)
+        if win.IsDock() {
+            win.Map()
+            break
+        }
         if workspace.FindWindow(msg.From) == nil {
             workspace.Add(win)
             workspace.Reshape()
@@ -163,6 +175,7 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
     case proto.Activate:
         workspace.Activate()
         workspace.Focus()// workspace.focus.TakeFocus()
+        xutil.SetCurrentDesktop(workspace.id, msg.XConn)
     case proto.Deactivate:
         if workspace.id != MaxWorkspaces {
             workspace.Deactivate()
@@ -192,8 +205,9 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
     default:
         return
     }
+
+    workspace.SetName()
     workspace.LogStatus()
-    logging.Println("------------------------")
 }
 
 func (workspace *Workspace) CleanUp() {
@@ -391,6 +405,7 @@ func (workspace *Workspace) Remove(window *Window) {
         workspace.central.Remove(window)
         workspace.focus = nil
         workspace.layout = LayoutFull
+        workspace.SetName()
     case inRight:
         workspace.right.Remove(window)
     default:
@@ -524,22 +539,6 @@ func (workspace *Workspace) FocusRight() *Window {
     return workspace.right.WindowByIndex(0)
 }
 
-func (workspace *Workspace) LogStatus() {
-    logging.Print("Workspace ID", workspace.id, " ")
-    if workspace.focus != nil {
-        logging.Println("focus = ", workspace.focus.Id())
-    } else {
-        logging.Println("focus = nil")
-    }
-
-    logging.Println("Central ")
-    workspace.central.LogStatus()
-    logging.Println("Left ")
-    workspace.left.LogStatus()
-    logging.Println("Right ")
-    workspace.right.LogStatus()
-    logging.Print("\n\n")
-}
 
 func (workspace *Workspace) Activate() {
     for i := 0; i < workspace.central.Len(); i++ {
@@ -606,6 +605,58 @@ func (workspace *Workspace) Reshape() {
     workspace.central.Reshape()
     workspace.left.Reshape()
     workspace.right.Reshape()
+}
+
+func (workspace *Workspace) SetName() {
+    if workspace.conn == nil {
+        return
+    }
+
+    repr := fmt.Sprintf("%d", workspace.id)
+    if workspace.focus != nil {
+        n := workspace.left.Len() + workspace.right.Len()
+        n += workspace.central.Len()
+        name, err := xutil.GetWMName(
+            workspace.focus.Id(), workspace.conn,
+        )
+        if err == nil {
+            runes := []rune(name)
+            if n < 2 {
+                repr = fmt.Sprintf("%d:%s", workspace.id, string(runes[:8]))
+            } else {
+                repr = fmt.Sprintf(
+                    "%d:%s(%d)", workspace.id, string(runes[:5]), n
+                )
+            }
+        }
+    }
+    names, err := xutil.GetDesktopNames(workspace.conn)
+    if err != nil {
+        names = make([]string, MaxWorkspaces)
+        for i := 0; i < MaxWorkspaces; i++ {
+            names[i] = fmt.Sprintf("%d", i+1)
+        }
+        xutil.SetDesktopNames(names, workspace.conn)
+    }
+    names[workspace.id - 1] = repr
+    xutil.SetDesktopNames(names, workspace.conn)
+}
+
+func (workspace *Workspace) LogStatus() {
+    logging.Print("Workspace ID", workspace.id, " ")
+    if workspace.focus != nil {
+        logging.Println("focus = ", workspace.focus.Id())
+    } else {
+        logging.Println("focus = nil")
+    }
+
+    logging.Println("Central ")
+    workspace.central.LogStatus()
+    logging.Println("Left ")
+    workspace.left.LogStatus()
+    logging.Println("Right ")
+    workspace.right.LogStatus()
+    logging.Print("\n\n")
 }
 
 type WorkspaceManager struct {

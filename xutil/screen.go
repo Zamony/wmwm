@@ -53,7 +53,7 @@ func ReadMonitorsInfo(conn *xgb.Conn) (MonitorsInfo, error) {
 
 	info.primary = Screen{
 		int(r.ScreenInfo[0].Width),
-		int(r.ScreenInfo[0].Height),
+		int(r.ScreenInfo[0].Height) - 20,
 		int(r.ScreenInfo[0].XOrg),
 	}
 
