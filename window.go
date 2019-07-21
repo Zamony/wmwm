@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
-	"github.com/Zamony/wm/logging"
 	"github.com/Zamony/wm/config"
+	"github.com/Zamony/wm/logging"
 	"github.com/Zamony/wm/proto"
 	"github.com/Zamony/wm/xutil"
 )
@@ -109,6 +109,11 @@ func (window *Window) SendFocusUp(id uint32) {
 
 func (window *Window) SendFocusDown(id uint32) {
 	msg := proto.Message{window.id, id, proto.FocusDown, window.conn}
+	window.mailbox <- msg
+}
+
+func (window *Window) SendMaximize(id uint32) {
+	msg := proto.Message{window.id, id, proto.Maximize, window.conn}
 	window.mailbox <- msg
 }
 

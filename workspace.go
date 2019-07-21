@@ -172,6 +172,13 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
         workspace.focus.Defocus()
         workspace.focus = workspace.FocusDown()
         workspace.Focus()// workspace.focus.TakeFocus()
+    case proto.Maximize:
+        if workspace.central.HasPadding() {
+            workspace.central.RemovePadding()
+        } else {
+            workspace.central.AddPadding()
+        }
+        workspace.Activate()
     case proto.Activate:
         workspace.Activate()
         workspace.Focus()// workspace.focus.TakeFocus()
@@ -206,7 +213,7 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
         return
     }
 
-    workspace.SetName()
+    workspace.ChangeName()
     workspace.LogStatus()
 }
 
@@ -405,7 +412,7 @@ func (workspace *Workspace) Remove(window *Window) {
         workspace.central.Remove(window)
         workspace.focus = nil
         workspace.layout = LayoutFull
-        workspace.SetName()
+        workspace.ChangeName()
     case inRight:
         workspace.right.Remove(window)
     default:
@@ -607,7 +614,7 @@ func (workspace *Workspace) Reshape() {
     workspace.right.Reshape()
 }
 
-func (workspace *Workspace) SetName() {
+func (workspace *Workspace) ChangeName() {
     if workspace.conn == nil {
         return
     }

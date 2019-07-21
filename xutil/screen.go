@@ -9,13 +9,15 @@ import (
 )
 
 type Screen struct {
-	width   int
-	height  int
-	xoffset int
+	width         int
+	height        int
+	xoffset       int
+	paddingTop    int
+	paddingBottom int
 }
 
-func NewScreen(width, height, xoffset int) Screen {
-	return Screen{width, height, xoffset}
+func NewScreen(width, height, xoffset, pTop, pBot int) Screen {
+	return Screen{width, height, xoffset, pTop, pBot}
 }
 
 func (screen *Screen) Width() int {
@@ -28,6 +30,14 @@ func (screen *Screen) Height() int {
 
 func (screen *Screen) XOffset() int {
 	return screen.xoffset
+}
+
+func (screen *Screen) PaddingTop() int {
+	return screen.paddingTop
+}
+
+func (screen *Screen) PaddingBottom() int {
+	return screen.paddingBottom
 }
 
 type MonitorsInfo struct {
@@ -54,8 +64,10 @@ func ReadMonitorsInfo(conn *xgb.Conn) (MonitorsInfo, error) {
 
 	info.primary = Screen{
 		int(r.ScreenInfo[0].Width),
-		int(r.ScreenInfo[0].Height) - config.PaddingBottom(),
+		int(r.ScreenInfo[0].Height),
 		int(r.ScreenInfo[0].XOrg),
+		config.PaddingTop(),
+		config.PaddingBottom(),
 	}
 
 	if nscreen == 2 {
@@ -64,6 +76,8 @@ func ReadMonitorsInfo(conn *xgb.Conn) (MonitorsInfo, error) {
 			int(r.ScreenInfo[1].Width),
 			int(r.ScreenInfo[1].Height),
 			int(r.ScreenInfo[1].XOrg),
+			0,
+			0,
 		}
 	}
 

@@ -9,9 +9,9 @@ import (
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xinerama"
 	"github.com/BurntSushi/xgb/xproto"
+	"github.com/Zamony/wm/config"
 	"github.com/Zamony/wm/kbrd"
 	"github.com/Zamony/wm/logging"
-	"github.com/Zamony/wm/config"
 	"github.com/Zamony/wm/xutil"
 )
 
@@ -118,6 +118,12 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 			}
 		}
 		return nil
+	case kbrd.XK_f:
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive {
+			win := NewWindow(uint32(key.Child), manager.Mailbox(), conn)
+			win.SendMaximize(manager.Curr())
+		}
 	case kbrd.XK_F1, kbrd.XK_F2, kbrd.XK_F3, kbrd.XK_F4, kbrd.XK_F5:
 		fallthrough
 	case kbrd.XK_F6, kbrd.XK_F7, kbrd.XK_F8, kbrd.XK_F9:
@@ -293,6 +299,6 @@ func main() {
 		c, _ := RunCommand(cmd)
 		defer c.Process.Kill()
 	}
-	
+
 	processEvents(conn, keymap, monitors, manager)
 }

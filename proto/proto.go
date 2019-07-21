@@ -20,6 +20,7 @@ const (
 	FocusRight
 	FocusUp
 	FocusDown
+	Maximize
 	ResizeLeft
 	ResizeRight
 	Close

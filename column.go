@@ -3,21 +3,22 @@ package main
 import (
 	"errors"
 
-	"github.com/Zamony/wm/xutil"
 	"github.com/Zamony/wm/logging"
+	"github.com/Zamony/wm/xutil"
 )
 
 type Column struct {
-	width   int
-	x       int
-	windows []*Window
-	screen  xutil.Screen
+	width      int
+	x          int
+	windows    []*Window
+	screen     xutil.Screen
+	fullscreen bool
 }
 
 func NewColumn(screen xutil.Screen) *Column {
 	return &Column{
 		screen.Width(), screen.XOffset(), nil,
-		xutil.NewScreen(screen.Width(), screen.Height(), screen.XOffset()),
+		screen, false,
 	}
 }
 
@@ -52,8 +53,16 @@ func (column *Column) Reshape() {
 		return
 	}
 
-	h := column.screen.Height() / n
-	offsety := 0
+	paddingT := column.screen.PaddingTop()
+	paddingB := column.screen.PaddingBottom()
+	if column.fullscreen {
+		paddingT = 0
+		paddingB = 0
+	}
+
+	height := column.screen.Height() - (paddingT + paddingB)
+	h := height / n
+	offsety := paddingT
 	for i := 0; i < n-1; i++ {
 		win := column.windows[i]
 		win.SetY(offsety)
@@ -66,8 +75,22 @@ func (column *Column) Reshape() {
 	win := column.windows[n-1]
 	win.SetY(offsety)
 	win.SetX(column.x)
-	win.SetHeight(column.screen.Height() - offsety)
+	win.SetHeight(height + paddingT - offsety)
 	win.SetWidth(column.width)
+}
+
+func (column *Column) HasPadding() bool {
+	return !column.fullscreen
+}
+
+func (column *Column) AddPadding() {
+	column.fullscreen = false
+	column.Reshape()
+}
+
+func (column *Column) RemovePadding() {
+	column.fullscreen = true
+	column.Reshape()
 }
 
 func (column *Column) IndexById(wid uint32) int {
