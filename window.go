@@ -4,6 +4,7 @@ import (
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/Zamony/wm/logging"
+	"github.com/Zamony/wm/config"
 	"github.com/Zamony/wm/proto"
 	"github.com/Zamony/wm/xutil"
 )
@@ -232,7 +233,9 @@ func (window *Window) UnsetBorder() error {
 	return xproto.ConfigureWindowChecked(
 		window.conn, xproto.Window(window.id),
 		xproto.ConfigWindowY|xproto.ConfigWindowHeight,
-		[]uint32{uint32(window.y - 2), uint32(window.height + 2)},
+		[]uint32{
+			uint32(window.y - config.BorderWidth()),
+			uint32(window.height + config.BorderWidth())},
 	).Check()
 }
 
@@ -241,8 +244,8 @@ func (window *Window) SetBorder() error {
 		window.conn, xproto.Window(window.id),
 		xproto.ConfigWindowY|xproto.ConfigWindowHeight,
 		[]uint32{
-			uint32(window.y + 2),
-			uint32(window.height - 2),
+			uint32(window.y + config.BorderWidth()),
+			uint32(window.height - config.BorderWidth()),
 		},
 	).Check()
 }

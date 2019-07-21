@@ -2,10 +2,10 @@ package main
 
 import (
     "fmt"
-
 	"github.com/BurntSushi/xgb"
     "github.com/Zamony/wm/proto"
     "github.com/Zamony/wm/xutil"
+    "github.com/Zamony/wm/config"
     "github.com/Zamony/wm/logging"
 )
 
@@ -619,14 +619,12 @@ func (workspace *Workspace) SetName() {
         name, err := xutil.GetWMName(
             workspace.focus.Id(), workspace.conn,
         )
-        if err == nil {
-            runes := []rune(name)
-            if n < 2 {
-                repr = fmt.Sprintf("%d:%s", workspace.id, string(runes[:8]))
+        if err == nil || n > 0 {
+            name = string([]rune(name)[:config.NameLimit()])
+            if n == 1 {
+                repr = fmt.Sprintf("%d:%s", workspace.id, name)
             } else {
-                repr = fmt.Sprintf(
-                    "%d:%s(%d)", workspace.id, string(runes[:5]), n
-                )
+                repr = fmt.Sprintf("%d:%s(%d)", workspace.id, name, n)
             }
         }
     }

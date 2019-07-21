@@ -2,16 +2,16 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"log"
 	"os/exec"
-	"time"
+	"regexp"
 
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xinerama"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/Zamony/wm/kbrd"
 	"github.com/Zamony/wm/logging"
+	"github.com/Zamony/wm/config"
 	"github.com/Zamony/wm/xutil"
 )
 
@@ -218,12 +218,22 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 	return nil
 }
 
+func RunCommand(c string) (*exec.Cmd, error) {
+	args := regexp.MustCompile(" +").Split(c, -1)
+	cmd := exec.Command(args[0], args[1:]...)
+	err := cmd.Start()
+	if err != nil {
+		return cmd, err
+	}
+	go func() {
+		cmd.Wait()
+	}()
+	return cmd, nil
+}
+
 func main() {
-	flag.BoolVar(
-		&logging.Debug, "debug", false,
-		"Outputs debug information to Stderr",
-	)
-	flag.Parse()
+	config.ParseArgs()
+	logging.Debug = config.Debug()
 
 	conn, err := xgb.NewConn()
 	if err != nil {
@@ -246,7 +256,7 @@ func main() {
 	}
 	if err := xproto.ChangeWindowAttributesChecked(
 		conn, root.Root, xproto.CwBackPixel|xproto.CwCursor,
-		[]uint32{uint32(0x008000), uint32(cursor)},
+		[]uint32{config.Color(), uint32(cursor)},
 	).Check(); err != nil {
 		log.Fatal(err)
 	}
@@ -279,11 +289,10 @@ func main() {
 	xutil.SetSupported(conn) // Set EWMH supported atoms
 	manager := NewWorkspaceManager(monitors)
 
-	cmd := exec.Command("tint2")
-	cmd.Start()
-	go func() {
-		time.Sleep(1)
-		cmd.Wait()
-	}()
+	for _, cmd := range config.Commands() {
+		c, _ := RunCommand(cmd)
+		defer c.Process.Kill()
+	}
+	
 	processEvents(conn, keymap, monitors, manager)
 }
