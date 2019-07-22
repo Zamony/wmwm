@@ -5,12 +5,13 @@ import (
 
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
+	"github.com/Zamony/wm/logging"
 )
 
 func GetAtom(name string, conn *xgb.Conn) xproto.Atom {
 	r, err := xproto.InternAtom(conn, false, uint16(len(name)), name).Reply()
 	if err != nil {
-		log.Fatal(err)
+		logging.Fatal(err)
 	}
 	if r == nil {
 		return 0
@@ -27,7 +28,7 @@ func HasAtomDefined(atom string, wid uint32, conn *xgb.Conn) bool {
 	).Reply()
 
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 
 	atomv := GetAtom(atom, conn)

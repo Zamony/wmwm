@@ -1,8 +1,6 @@
 package xutil
 
 import (
-	"log"
-
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/Zamony/wm/kbrd"
@@ -30,7 +28,7 @@ func BecomeWM(conn *xgb.Conn, xroot xproto.ScreenInfo) error {
 	return changed.Check()
 }
 
-func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto.Keysym) {
+func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto.Keysym) error {
 	sym2code := make(map[xproto.Keysym]xproto.Keycode)
 	needed := map[xproto.Keysym]uint8{
 		kbrd.XK_BackSpace: 0, kbrd.XK_F1: 0,
@@ -86,9 +84,11 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 			shortcut.Keycode, xproto.GrabModeAsync, xproto.GrabModeAsync,
 		).Check()
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
+
+	return nil
 }
 
 func GrabMouse(conn *xgb.Conn, xroot xproto.ScreenInfo) error {

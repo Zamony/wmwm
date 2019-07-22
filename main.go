@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"os/exec"
 	"regexp"
 
@@ -104,18 +103,13 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 		if ctrlActive && altActive {
 			return errors.New("Error: quit event")
 		}
-
-		return nil
-
 	case kbrd.XK_t:
 		winActive := (key.State & xproto.ModMask4) != 0
 		if winActive {
-			_, err := RunCommand(config.TerminalCmd())
-			if err != nil {
-				return errors.New("Terminal launch failed")
+			if _, err := RunCommand(config.TerminalCmd()); err != nil {
+				logging.Error("Terminal launch failed")
 			}
 		}
-		return nil
 	case kbrd.XK_f:
 		winActive := (key.State & xproto.ModMask4) != 0
 		if winActive {
@@ -207,18 +201,16 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 	case kbrd.XK_grave:
 		winActive := (key.State & xproto.ModMask4) != 0
 		if winActive {
-			_, err := RunCommand(config.LauncherCmd())
-			if err != nil {
-				return errors.New("Application launcher failed")
+			if _, err := RunCommand(config.LauncherCmd()); err != nil {
+				logging.Error("Application launcher failed")
 			}
 		}
 		return nil
 	case kbrd.XK_l:
 		winActive := (key.State & xproto.ModMask4) != 0
 		if winActive {
-			_, err := RunCommand(config.LockerCmd())
-			if err != nil {
-				return errors.New("Locker launch failed")
+			if _, err := RunCommand(config.LockerCmd()); err != nil {
+				logging.Error("Locker launch failed")
 			}
 		}
 	default:
@@ -247,37 +239,37 @@ func main() {
 
 	conn, err := xgb.NewConn()
 	if err != nil {
-		log.Fatal(err)
+		logging.Fatal(err)
 	}
 	defer conn.Close()
 
 	coninfo := xproto.Setup(conn)
 	if coninfo == nil {
-		log.Fatal("Coudn't parse X connection info")
+		logging.Fatal("Coudn't parse X connection info")
 	}
 
 	if len(coninfo.Roots) != 1 {
-		log.Fatal("Number of roots > 1, Xinerama init failed")
+		logging.Fatal("Number of roots > 1, Xinerama init failed")
 	}
 	root := coninfo.Roots[0]
 	cursor, err := xutil.CreateCursor(conn)
 	if err != nil {
-		log.Fatal(err)
+		logging.Fatal(err)
 	}
 	if err := xproto.ChangeWindowAttributesChecked(
 		conn, root.Root, xproto.CwBackPixel|xproto.CwCursor,
 		[]uint32{config.Color(), uint32(cursor)},
 	).Check(); err != nil {
-		log.Fatal(err)
+		logging.Fatal(err)
 	}
 
 	if err := xinerama.Init(conn); err != nil {
-		log.Fatal(err)
+		logging.Fatal(err)
 	}
 
 	monitors, err := xutil.ReadMonitorsInfo(conn)
 	if err != nil {
-		log.Fatal(err)
+		logging.Fatal(err)
 	} else if monitors.IsDualSetup() {
 		xutil.SetNumberOfDesktops(MaxWorkspaces, conn)
 	} else {
@@ -286,16 +278,22 @@ func main() {
 
 	if err := xutil.BecomeWM(conn, root); err != nil {
 		logging.Println(err)
-		log.Fatal("Cannot take WM ownership")
+		logging.Fatal("Cannot take WM ownership")
 	}
 
 	keymap, err := kbrd.Mapping(conn)
 	if err != nil {
-		log.Fatal(err)
+		logging.Fatal(err)
 	}
 
-	xutil.GrabMouse(conn, root)
-	xutil.GrabShortcuts(conn, root, keymap)
+	if err := xutil.GrabMouse(conn, root); err != nil {
+		logging.Fatal(err)
+	}
+
+	if err := xutil.GrabShortcuts(conn, root, keymap); err != nil {
+		logging.Fatal(err)
+	}
+
 	xutil.SetSupported(conn) // Set EWMH supported atoms
 	manager := NewWorkspaceManager(monitors)
 

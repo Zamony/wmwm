@@ -5,7 +5,6 @@ import (
 
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
-	"github.com/Zamony/wm/logging"
 )
 
 func getRoot(conn *xgb.Conn) (xproto.Window, error) {
@@ -115,14 +114,8 @@ func GetDesktopNames(conn *xgb.Conn) ([]string, error) {
 
 	names := make([]string, 0)
 	start := 0
-	logging.Println("REPLYVAL", reply.Value)
 	for i, c := range reply.Value {
 		if c == 0 {
-			// if string(reply.Value[start:i]) == string(make([]byte, 0)) {
-			// 	logging.Println("SKIPPING")
-			// 	start = i + 1
-			// 	continue
-			// }
 			names = append(names, string(reply.Value[start:i]))
 			start = i + 1
 		}
@@ -152,11 +145,9 @@ func GetWMName(wid uint32, conn *xgb.Conn) (string, error) {
 		if reply.Format != 8 {
 			return "", errors.New("Error in getting property, not a string")
 		}
-		logging.Println("WMNAME", string(reply.Value))
 		return string(reply.Value), nil
 	}
 
-	logging.Println("NETWMNAME", string(reply.Value))
 	return string(reply.Value), nil
 }
 
