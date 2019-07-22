@@ -38,7 +38,7 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 		kbrd.XK_F6: 0, kbrd.XK_F7: 0, kbrd.XK_F8: 0, kbrd.XK_F9: 0,
 		kbrd.XK_Left: 0, kbrd.XK_Right: 0, kbrd.XK_Up: 0, kbrd.XK_Down: 0,
 		kbrd.XK_q: 0, kbrd.XK_Return: 0, kbrd.XK_grave: 0, kbrd.XK_t: 0,
-		kbrd.XK_f: 0,
+		kbrd.XK_f: 0, kbrd.XK_l: 0,
 	}
 	for i, syms := range keymap {
 		for _, sym := range syms {
@@ -53,6 +53,7 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 		{xproto.ModMask4, sym2code[kbrd.XK_q]},
 		{xproto.ModMask4, sym2code[kbrd.XK_grave]},
 		{xproto.ModMask4, sym2code[kbrd.XK_f]},
+		{xproto.ModMask4, sym2code[kbrd.XK_l]},
 		{uint16(0), sym2code[kbrd.XK_F1]},
 		{uint16(0), sym2code[kbrd.XK_F2]}, {uint16(0), sym2code[kbrd.XK_F3]},
 		{uint16(0), sym2code[kbrd.XK_F4]}, {uint16(0), sym2code[kbrd.XK_F5]},

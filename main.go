@@ -110,9 +110,7 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 	case kbrd.XK_t:
 		winActive := (key.State & xproto.ModMask4) != 0
 		if winActive {
-			cmd := exec.Command("xterm")
-			err := cmd.Start()
-			go func() { cmd.Wait() }()
+			_, err := RunCommand(config.TerminalCmd())
 			if err != nil {
 				return errors.New("Terminal launch failed")
 			}
@@ -209,14 +207,20 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 	case kbrd.XK_grave:
 		winActive := (key.State & xproto.ModMask4) != 0
 		if winActive {
-			cmd := exec.Command("rofi", "-show", "run")
-			err := cmd.Start()
-			go func() { cmd.Wait() }()
+			_, err := RunCommand(config.LauncherCmd())
 			if err != nil {
 				return errors.New("Application launcher failed")
 			}
 		}
 		return nil
+	case kbrd.XK_l:
+		winActive := (key.State & xproto.ModMask4) != 0
+		if winActive {
+			_, err := RunCommand(config.LockerCmd())
+			if err != nil {
+				return errors.New("Locker launch failed")
+			}
+		}
 	default:
 		return nil
 	}

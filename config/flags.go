@@ -7,6 +7,9 @@ var (
 	borderWidth   NonNegativeFlag
 	nameLimit     NonNegativeFlag
 	commands      StringsFlag
+	terminal      string
+	launcher      string
+	locker        string
 	debug         bool
 )
 
@@ -35,6 +38,18 @@ func NameLimit() int {
 
 func Commands() []string {
 	return commands.Value
+}
+
+func TerminalCmd() string {
+	return terminal
+}
+
+func LockerCmd() string {
+	return locker
+}
+
+func LauncherCmd() string {
+	return launcher
 }
 
 func Debug() bool {

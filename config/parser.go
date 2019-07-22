@@ -65,6 +65,9 @@ func ParseArgs() {
 	flag.Var(&borderWidth, "border-width", "Border width of focused window")
 	flag.Var(&nameLimit, "name-limit", "Maximum length of workspace name")
 	flag.Var(&commands, "exec", "Commands to execute at startup")
+	flag.StringVar(&terminal, "term", "xterm", "A command to launch terminal emulator")
+	flag.StringVar(&launcher, "launcher", "rofi -show run", "A command to show application launcher")
+	flag.StringVar(&locker, "lock", "slock", "A command to lock screen")
 	flag.BoolVar(
 		&debug, "debug", false,
 		"Outputs debug information to Stderr",
