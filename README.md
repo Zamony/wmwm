@@ -1,5 +1,10 @@
 **wmwm** is a pure Go autotiling window manager. It is very simple (2k loc) and lightweight
+
+## My double head setup
+
 ![WMWM multihead setup](doc/wmwm.png)
+
+
 ## Basics
 With wmwm you start with one window which takes full size of the screen. Next window will split screen into equal columns with the second window placed in the right column. Additional windows will be placed in the right column.
 
