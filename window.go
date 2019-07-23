@@ -129,83 +129,48 @@ func (window *Window) SendResizeRight(id uint32) {
 
 func (window *Window) SetX(x int) error {
 	window.x = x
-	err := xproto.ConfigureWindowChecked(
-		window.conn, xproto.Window(window.id),
-		xproto.ConfigWindowX, []uint32{uint32(x)},
-	).Check()
-	return err
+	return xutil.SetWindowX(x, window.id, window.conn)
 }
 
 func (window *Window) SetY(y int) error {
 	window.y = y
-	err := xproto.ConfigureWindowChecked(
-		window.conn, xproto.Window(window.id),
-		xproto.ConfigWindowY, []uint32{uint32(y)},
-	).Check()
-	return err
+	return xutil.SetWindowY(y, window.id, window.conn)
 }
 
 func (window *Window) SetWidth(w int) error {
 	window.width = w
-	err := xproto.ConfigureWindowChecked(
-		window.conn, xproto.Window(window.id),
-		xproto.ConfigWindowWidth, []uint32{uint32(w)},
-	).Check()
-	return err
+	return xutil.SetWindowWidth(w, window.id, window.conn)
 }
 
 func (window *Window) SetHeight(h int) error {
 	window.height = h
-	err := xproto.ConfigureWindowChecked(
-		window.conn, xproto.Window(window.id),
-		xproto.ConfigWindowHeight, []uint32{uint32(h)},
-	).Check()
-	return err
+	return xutil.SetWindowHeight(h, window.id, window.conn)
 }
 
 func (window *Window) Map() error {
-	err := xproto.MapWindowChecked(
-		window.conn, xproto.Window(window.id),
-	).Check()
-	if err != nil {
+	if err := xutil.MapWindow(window.id, window.conn); err != nil {
 		return err
 	}
 
-	err = xproto.ConfigureWindowChecked(
-		window.conn, xproto.Window(window.id),
-		xproto.ConfigWindowBorderWidth, []uint32{uint32(0)},
-	).Check()
-	if err != nil {
+	if err := xutil.RemoveWindowBorder(window.id, window.conn); err != nil {
 		return err
 	}
 
-	err = xproto.ChangeWindowAttributesChecked(
-		window.conn, xproto.Window(window.id),
-		xproto.CwEventMask, []uint32{
-			xproto.EventMaskStructureNotify | xproto.EventMaskEnterWindow,
-		},
-	).Check()
-	return err
+	return xutil.WatchWindowEvents(window.id, window.conn)
 }
 
 func (window *Window) Unmap() error {
-	err := xproto.UnmapWindowChecked(
-		window.conn, xproto.Window(window.id),
-	).Check()
-	return err
+	return xutil.UnmapWindow(window.id, window.conn)
 }
 
 func (window *Window) Close() error {
 	return xutil.SendClientEvent(
-		"WM_DELETE_WINDOW",
-		xproto.TimeCurrentTime,
-		window.id,
-		window.conn,
+		"WM_DELETE_WINDOW", xproto.TimeCurrentTime, window.id, window.conn,
 	)
 }
 
 func (window *Window) Destroy() error {
-	return xproto.DestroyWindowChecked(window.conn, xproto.Window(window.id)).Check()
+	return xutil.DestroyWindow(window.id, window.conn)
 }
 
 func (window *Window) CouldBeDestroyed() bool {
@@ -213,13 +178,7 @@ func (window *Window) CouldBeDestroyed() bool {
 }
 
 func (window *Window) CouldBeManaged() bool {
-	x := window.x
-	err := xproto.ConfigureWindowChecked(
-		window.conn, xproto.Window(window.id),
-		xproto.ConfigWindowX, []uint32{uint32(x)},
-	).Check()
-
-	if err != nil {
+	if err := xutil.SetWindowX(window.x, window.id, window.conn); err != nil {
 		return false
 	}
 
@@ -235,24 +194,17 @@ func (window *Window) Defocus() error {
 }
 
 func (window *Window) UnsetBorder() error {
-	return xproto.ConfigureWindowChecked(
-		window.conn, xproto.Window(window.id),
-		xproto.ConfigWindowY|xproto.ConfigWindowHeight,
-		[]uint32{
-			uint32(window.y - config.BorderWidth()),
-			uint32(window.height + config.BorderWidth())},
-	).Check()
+	return xutil.RemovePaddingFromWindow(
+		window.y, window.height, config.BorderWidth(),
+		window.id, window.conn,
+	)
 }
 
 func (window *Window) SetBorder() error {
-	return xproto.ConfigureWindowChecked(
-		window.conn, xproto.Window(window.id),
-		xproto.ConfigWindowY|xproto.ConfigWindowHeight,
-		[]uint32{
-			uint32(window.y + config.BorderWidth()),
-			uint32(window.height - config.BorderWidth()),
-		},
-	).Check()
+	return xutil.AddPaddingToWindow(
+		window.y, window.height, config.BorderWidth(),
+		window.id, window.conn,
+	)
 }
 
 func (window *Window) TakeFocus() error {
@@ -279,10 +231,7 @@ func (window *Window) TakeFocus() error {
 		return err
 	}
 
-	return xproto.SetInputFocusChecked(
-		window.conn, xproto.InputFocusPointerRoot,
-		xproto.Window(window.id), xproto.TimeCurrentTime,
-	).Check()
+	return xutil.FocusWindow(window.id, window.conn)
 }
 
 func (window Window) IsDock() bool {

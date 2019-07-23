@@ -96,7 +96,7 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
         if workspace.FindWindow(msg.From) == nil {
             workspace.Add(win)
             workspace.Reshape()
-            workspace.Focus()// workspace.focus.TakeFocus()
+            workspace.Focus()
             if workspace.id == MaxWorkspaces {
                 workspace.Activate()
             }
@@ -115,7 +115,7 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
             workspace.Remove(win)
             win.Unmap()
             workspace.Reshape()
-            workspace.Focus()// workspace.focus.TakeFocus()
+            workspace.Focus()
             go func() {
                 if workspace.focus != nil {
                     workspace.focus.SendFocusHere()
@@ -153,25 +153,25 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
             if win != nil {
                 workspace.focus.Defocus()
                 workspace.focus = win
-                workspace.Focus()// workspace.focus.TakeFocus()
+                workspace.Focus()
             }
         }
     case proto.FocusLeft:
         workspace.focus.Defocus()
         workspace.focus = workspace.FocusLeft()
-        workspace.Focus()// workspace.focus.TakeFocus()
+        workspace.Focus()
     case proto.FocusRight:
         workspace.focus.Defocus()
         workspace.focus = workspace.FocusRight()
-        workspace.Focus()// workspace.focus.TakeFocus()
+        workspace.Focus()
     case proto.FocusUp:
         workspace.focus.Defocus()
         workspace.focus = workspace.FocusUp()
-        workspace.Focus()// workspace.focus.TakeFocus()
+        workspace.Focus()
     case proto.FocusDown:
         workspace.focus.Defocus()
         workspace.focus = workspace.FocusDown()
-        workspace.Focus()// workspace.focus.TakeFocus()
+        workspace.Focus()
     case proto.Maximize:
         if workspace.central.HasPadding() {
             workspace.central.RemovePadding()
@@ -181,7 +181,7 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
         workspace.Activate()
     case proto.Activate:
         workspace.Activate()
-        workspace.Focus()// workspace.focus.TakeFocus()
+        workspace.Focus()
         xutil.SetCurrentDesktop(workspace.id, msg.XConn)
     case proto.Deactivate:
         if workspace.id != MaxWorkspaces {
@@ -196,19 +196,19 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
     case proto.MoveUp:
         workspace.MoveUp(workspace.focus.Id())
         workspace.Reshape()
-        workspace.Focus()// workspace.focus.TakeFocus()
+        workspace.Focus()
     case proto.MoveDown:
         workspace.MoveDown(workspace.focus.Id())
         workspace.Reshape()
-        workspace.Focus()// workspace.focus.TakeFocus()
+        workspace.Focus()
     case proto.MoveLeft:
         workspace.MoveLeft(workspace.focus.Id())
         workspace.Reshape()
-        workspace.Focus()// workspace.focus.TakeFocus()
+        workspace.Focus()
     case proto.MoveRight:
         workspace.MoveRight(workspace.focus.Id())
         workspace.Reshape()
-        workspace.Focus()// workspace.focus.TakeFocus()
+        workspace.Focus()
     default:
         return
     }
@@ -253,7 +253,7 @@ func (workspace *Workspace) CleanUp() {
     if cleaned {
         workspace.Reshape()
         if workspace.focus != nil {
-            workspace.Focus()// workspace.focus.TakeFocus()
+            workspace.Focus()
         }
     }
 }
