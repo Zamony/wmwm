@@ -1,9 +1,11 @@
+// Package proto defines internal protocol messages structure
 package proto
 
 import (
 	"github.com/BurntSushi/xgb"
 )
 
+// Types of the messages used in the internal protocol
 const (
 	Attach = iota
 	Detach
@@ -27,6 +29,7 @@ const (
 	Exit
 )
 
+// Message represents message of the internal protocol
 type Message struct {
 	From  uint32
 	To    uint32

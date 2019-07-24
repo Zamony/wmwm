@@ -1,3 +1,4 @@
+// Package xutil provides high-level abstraction for the XGB functions
 package xutil
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/Zamony/wm/logging"
 )
 
+// GetAtom returns atom according to the specified string
 func GetAtom(name string, conn *xgb.Conn) xproto.Atom {
 	r, err := xproto.InternAtom(conn, false, uint16(len(name)), name).Reply()
 	if err != nil {
@@ -20,8 +22,8 @@ func GetAtom(name string, conn *xgb.Conn) xproto.Atom {
 	return r.Atom
 }
 
+// HasAtomDefined returns true if window has specified atom defined
 func HasAtomDefined(atom string, wid uint32, conn *xgb.Conn) bool {
-
 	prop, err := xproto.GetProperty(
 		conn, false, xproto.Window(wid), GetAtom("WM_PROTOCOLS", conn),
 		xproto.GetPropertyTypeAny, 0, 64,
@@ -44,6 +46,7 @@ func HasAtomDefined(atom string, wid uint32, conn *xgb.Conn) bool {
 	return false
 }
 
+// SendClientEvent sends client event
 func SendClientEvent(atom string, timepoint, wid uint32, conn *xgb.Conn) error {
 	return xproto.SendEventChecked(
 		conn, false, xproto.Window(wid), xproto.EventMaskNoEvent,

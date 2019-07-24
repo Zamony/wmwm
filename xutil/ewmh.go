@@ -1,3 +1,4 @@
+// Package xutil provides high-level abstraction for the XGB functions
 package xutil
 
 import (
@@ -16,6 +17,7 @@ func getRoot(conn *xgb.Conn) (xproto.Window, error) {
 	return coninfo.Roots[0].Root, nil
 }
 
+// SetSupported sets supported hints
 func SetSupported(conn *xgb.Conn) error {
 	atoms := []xproto.Atom{
 		GetAtom("_NET_SUPPORTED", conn),
@@ -39,6 +41,7 @@ func SetSupported(conn *xgb.Conn) error {
 	return err
 }
 
+// SetNumberOfDesktops sets total number of desktops (workspaces)
 func SetNumberOfDesktops(n uint32, conn *xgb.Conn) error {
 	root, err := getRoot(conn)
 	if err != nil {
@@ -54,6 +57,7 @@ func SetNumberOfDesktops(n uint32, conn *xgb.Conn) error {
 	return err
 }
 
+// SetCurrentDesktop sets active desktop
 func SetCurrentDesktop(n uint32, conn *xgb.Conn) error {
 	root, err := getRoot(conn)
 	if err != nil {
@@ -69,6 +73,7 @@ func SetCurrentDesktop(n uint32, conn *xgb.Conn) error {
 	return err
 }
 
+// SetDesktopNames sets desktops names
 func SetDesktopNames(names []string, conn *xgb.Conn) error {
 	nullterm := make([]byte, 0)
 	for _, name := range names {
@@ -94,6 +99,7 @@ func SetDesktopNames(names []string, conn *xgb.Conn) error {
 	return err
 }
 
+// GetDesktopNames gets names of desktops
 func GetDesktopNames(conn *xgb.Conn) ([]string, error) {
 	root, err := getRoot(conn)
 	if err != nil {
@@ -126,6 +132,8 @@ func GetDesktopNames(conn *xgb.Conn) ([]string, error) {
 	return names, nil
 }
 
+// GetWMName gets window name specified in _NET_WM_NAME.
+// If it doesn't exist name will be looked up in the WM_NAME property
 func GetWMName(wid uint32, conn *xgb.Conn) (string, error) {
 	reply, err := xproto.GetProperty(
 		conn, false, xproto.Window(wid), GetAtom("_NET_WM_NAME", conn),
@@ -151,6 +159,8 @@ func GetWMName(wid uint32, conn *xgb.Conn) (string, error) {
 	return string(reply.Value), nil
 }
 
+// IsDock checks whether the window is dock,
+// checking if it has _NET_WM_WINDOW_TYPE_DOCK defined
 func IsDock(wid uint32, conn *xgb.Conn) bool {
 	reply, err := xproto.GetProperty(
 		conn, false, xproto.Window(wid), GetAtom("_NET_WM_WINDOW_TYPE", conn),

@@ -1,3 +1,5 @@
+// Package kbrd provides constants representing physical keys
+// and the mapping from physical keys to logical keys
 package kbrd
 
 import (
@@ -7,6 +9,7 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 )
 
+// Mapping returns mapping from keycode to keysym
 func Mapping(conn *xgb.Conn) ([256][]xproto.Keysym, error) {
 	const low = 8
 	const high = 255

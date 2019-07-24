@@ -1,3 +1,5 @@
+// Package kbrd provides constants representing physical keys
+// and the mapping from physical keys to logical keys
 package kbrd
 
 // Known KeySyms from /usr/include/X11/keysymdef.h

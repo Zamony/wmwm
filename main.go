@@ -1,3 +1,4 @@
+// Package main implements logic of the window manager
 package main
 
 import (
@@ -123,9 +124,11 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 		if winActive && manager.Curr() != fkeys[keysym] {
 			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
 			win.SendReattach(fkeys[keysym])
-		} else if !winActive {
+		} else if !winActive && manager.Curr() != fkeys[keysym] {
 			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
-			if fkeys[keysym] != manager.SpecialWorkspace() {
+			if manager.Curr() == manager.SpecialWorkspace() {
+				win.SendDeactivate(manager.Prev())
+			} else if fkeys[keysym] != manager.SpecialWorkspace() {
 				win.SendDeactivate(manager.Curr())
 			}
 			win.SendActivate(fkeys[keysym])
@@ -220,6 +223,7 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 	return nil
 }
 
+// RunCommand starts specified command in a separate goroutine
 func RunCommand(c string) (*exec.Cmd, error) {
 	args := regexp.MustCompile(" +").Split(c, -1)
 	cmd := exec.Command(args[0], args[1:]...)

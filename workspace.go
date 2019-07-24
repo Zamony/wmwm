@@ -1,3 +1,4 @@
+// Package main implements logic of the window manager
 package main
 
 import (
@@ -9,6 +10,7 @@ import (
     "github.com/Zamony/wm/logging"
 )
 
+// Layouts affect width of the columns
 const (
     LayoutFull = iota
     LayoutEqual
@@ -16,11 +18,15 @@ const (
 )
 
 const (
+    // MaxWorkspaces sets the number of workspaces available
     MaxWorkspaces    = 9
+    // DefaultWorkspace sets default active workspace
     DefaultWorkspace = 1
+    // DefaultLayout sets default column layout
     DefaultLayout    = LayoutEqual
 )
 
+// Workspace represents a group of related windows
 type Workspace struct {
     left    *Column
     right   *Column
@@ -34,6 +40,7 @@ type Workspace struct {
     conn    *xgb.Conn
 }
 
+// NewWorkspace creates instance of Workspace
 func NewWorkspace(headc, input, next chan proto.Message, id uint32, screen xutil.Screen) *Workspace {
     return &Workspace{
         left:    NewColumn(screen),
@@ -49,6 +56,7 @@ func NewWorkspace(headc, input, next chan proto.Message, id uint32, screen xutil
     }
 }
 
+// Run makes workspace listen for incoming messages from windows
 func (workspace *Workspace) Run() {
     for {
         msg := <-workspace.input
@@ -217,6 +225,7 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
     workspace.LogStatus()
 }
 
+// CleanUp removes windows from workspace that are no longer manageable
 func (workspace *Workspace) CleanUp() {
     cleaned := false
     for i := 0; i < workspace.central.Len(); i++ {
@@ -258,6 +267,7 @@ func (workspace *Workspace) CleanUp() {
     }
 }
 
+// MoveLeft moves window to the left column
 func (workspace *Workspace) MoveLeft(wid uint32) {
     idx := workspace.right.IndexById(wid)
     if idx > -1 && workspace.right.Len() > 1 {
@@ -267,6 +277,7 @@ func (workspace *Workspace) MoveLeft(wid uint32) {
     }
 }
 
+// MoveRight moves window to the right column
 func (workspace *Workspace) MoveRight(wid uint32) {
     idx := workspace.left.IndexById(wid)
     if idx > -1 && workspace.left.Len() > 1 {
@@ -276,6 +287,7 @@ func (workspace *Workspace) MoveRight(wid uint32) {
     }
 }
 
+// MoveUp moves window upward
 func (workspace *Workspace) MoveUp(wid uint32) {
     idx := workspace.central.IndexById(wid)
     if idx > -1 {
@@ -293,6 +305,7 @@ func (workspace *Workspace) MoveUp(wid uint32) {
     }
 }
 
+// MoveDown moves window downward
 func (workspace *Workspace) MoveDown(wid uint32) {
     idx := workspace.central.IndexById(wid)
     if idx > -1 {
@@ -310,6 +323,7 @@ func (workspace *Workspace) MoveDown(wid uint32) {
     }
 }
 
+// ResizeLeft resizes current window to the left
 func (workspace *Workspace) ResizeLeft(wid uint32) {
     idx := workspace.right.IndexById(wid)
     if idx > -1 && workspace.layout == LayoutLeftWide {
@@ -325,6 +339,7 @@ func (workspace *Workspace) ResizeLeft(wid uint32) {
     }
 }
 
+// ResizeRight resizes current window to the right
 func (workspace *Workspace) ResizeRight(wid uint32) {
     idx := workspace.left.IndexById(wid)
     if idx > -1 && workspace.layout == LayoutEqual {
@@ -339,6 +354,7 @@ func (workspace *Workspace) ResizeRight(wid uint32) {
     }
 }
 
+// Add adds new window to the workspace
 func (workspace *Workspace) Add(window *Window) {
     leftEmpty := workspace.left.Len() < 1
     rightEmpty := workspace.right.Len() < 1
@@ -365,6 +381,7 @@ func (workspace *Workspace) Add(window *Window) {
     }
 }
 
+// Remove removes window from the workspace
 func (workspace *Workspace) Remove(window *Window) {
     if window == nil {
         return
@@ -420,6 +437,7 @@ func (workspace *Workspace) Remove(window *Window) {
     }
 }
 
+// Focus changes focus to current focus window
 func (workspace *Workspace) Focus() {
     if workspace.focus == nil {
         return
@@ -432,6 +450,7 @@ func (workspace *Workspace) Focus() {
     }
 }
 
+// Refocus finds new focus window
 func (workspace *Workspace) Refocus() {
     if workspace.focus == nil {
         return
@@ -464,6 +483,7 @@ func (workspace *Workspace) Refocus() {
     workspace.focus = nil
 }
 
+// FocusDown changes focus downward
 func (workspace *Workspace) FocusDown() *Window {
     if workspace.focus == nil {
         return nil
@@ -487,6 +507,7 @@ func (workspace *Workspace) FocusDown() *Window {
     return workspace.focus
 }
 
+// FocusUp changes focus upward
 func (workspace *Workspace) FocusUp() *Window {
     if workspace.focus == nil {
         return nil
@@ -510,6 +531,7 @@ func (workspace *Workspace) FocusUp() *Window {
     return workspace.focus
 }
 
+// FocusLeft changes focus to the left
 func (workspace *Workspace) FocusLeft() *Window {
     if workspace.focus == nil {
         return nil
@@ -528,6 +550,7 @@ func (workspace *Workspace) FocusLeft() *Window {
     return workspace.left.WindowByIndex(0)
 }
 
+// FocusRight changes focus to the right
 func (workspace *Workspace) FocusRight() *Window {
     if workspace.focus == nil {
         return nil
@@ -546,7 +569,7 @@ func (workspace *Workspace) FocusRight() *Window {
     return workspace.right.WindowByIndex(0)
 }
 
-
+// Activate makes workspace active, making all its windows visible
 func (workspace *Workspace) Activate() {
     for i := 0; i < workspace.central.Len(); i++ {
         win := workspace.central.WindowByIndex(i)
@@ -562,6 +585,7 @@ func (workspace *Workspace) Activate() {
     }
 }
 
+// Deactivate makes workspace active, making all its windows invisible
 func (workspace *Workspace) Deactivate() {
     for i := 0; i < workspace.central.Len(); i++ {
         win := workspace.central.WindowByIndex(i)
@@ -577,6 +601,7 @@ func (workspace *Workspace) Deactivate() {
     }
 }
 
+// FindWindow searches window by its identifier
 func (workspace *Workspace) FindWindow(wid uint32) *Window {
     if idx := workspace.central.IndexById(wid); idx > -1 {
         return workspace.central.WindowByIndex(idx)
@@ -593,6 +618,7 @@ func (workspace *Workspace) FindWindow(wid uint32) *Window {
     return nil
 }
 
+// Reshape changes window sizes according to current layout
 func (workspace *Workspace) Reshape() {
     if workspace.central.Len() > 0 {
         workspace.central.SetX(0)
@@ -604,9 +630,9 @@ func (workspace *Workspace) Reshape() {
         workspace.right.SetWidth50()
     } else {
         workspace.left.SetX(0)
-        x := workspace.left.SetWidth80()
+        x := workspace.left.SetWidth65()
         workspace.right.SetX(x)
-        workspace.right.SetWidth20()
+        workspace.right.SetWidth35()
     }
 
     workspace.central.Reshape()
@@ -614,6 +640,8 @@ func (workspace *Workspace) Reshape() {
     workspace.right.Reshape()
 }
 
+// ChangeName changes name of the workspace according
+// to current focused window name
 func (workspace *Workspace) ChangeName() {
     if workspace.conn == nil {
         return
@@ -647,6 +675,7 @@ func (workspace *Workspace) ChangeName() {
     xutil.SetDesktopNames(names, workspace.conn)
 }
 
+// LogStatus logs workspace's information for debugging purposes
 func (workspace *Workspace) LogStatus() {
     logging.Print("Workspace ID", workspace.id, " ")
     if workspace.focus != nil {
@@ -664,12 +693,15 @@ func (workspace *Workspace) LogStatus() {
     logging.Print("\n\n")
 }
 
+// WorkspaceManager represents a logical bridge
+// between windows and workspaces
 type WorkspaceManager struct {
     prev    uint32
     curr    uint32
     mailbox chan proto.Message
 }
 
+// NewWorkspaceManager creates instance of WorkspaceManager
 func NewWorkspaceManager(monitors xutil.MonitorsInfo) *WorkspaceManager {
     input := make(chan proto.Message)
     next := make(chan proto.Message)
@@ -695,18 +727,22 @@ func NewWorkspaceManager(monitors xutil.MonitorsInfo) *WorkspaceManager {
     return &WorkspaceManager{DefaultWorkspace, DefaultWorkspace, mailbox}
 }
 
+// Mailbox returns channel, that is used for passing messages to workspaces
 func (wrkmgr *WorkspaceManager) Mailbox() chan proto.Message {
     return wrkmgr.mailbox
 }
 
+// Prev returns id of previously active workspace
 func (wrkmgr WorkspaceManager) Prev() uint32 {
     return wrkmgr.prev
 }
 
+// Curr return id of currently active workspace
 func (wrkmgr *WorkspaceManager) Curr() uint32 {
     return wrkmgr.curr
 }
 
+// SetCurr sets current active workspace
 func (wrkmgr *WorkspaceManager) SetCurr(n uint32) {
     if wrkmgr.curr != n {
         wrkmgr.prev = wrkmgr.curr
@@ -714,6 +750,7 @@ func (wrkmgr *WorkspaceManager) SetCurr(n uint32) {
     wrkmgr.curr = n
 }
 
+// SpecialWorkspace returns id of special workspace, used for external monitor
 func (wrkmgr WorkspaceManager) SpecialWorkspace() uint32 {
     return MaxWorkspaces
 }

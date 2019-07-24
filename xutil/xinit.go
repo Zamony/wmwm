@@ -1,3 +1,4 @@
+// Package xutil provides high-level abstraction for the XGB functions
 package xutil
 
 import (
@@ -6,11 +7,13 @@ import (
 	"github.com/Zamony/wm/kbrd"
 )
 
+// Shortcut represents keys combination
 type Shortcut struct {
 	Modifiers uint16
 	Keycode   xproto.Keycode
 }
 
+// BecomeWM asks X to grant it permission to manage windows
 func BecomeWM(conn *xgb.Conn, xroot xproto.ScreenInfo) error {
 	mask := []uint32{
 		xproto.EventMaskKeyPress |
@@ -28,6 +31,8 @@ func BecomeWM(conn *xgb.Conn, xroot xproto.ScreenInfo) error {
 	return changed.Check()
 }
 
+// GrabShortcuts tells X that it should send
+// specified keys combinations directly to the WM
 func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto.Keysym) error {
 	sym2code := make(map[xproto.Keysym]xproto.Keycode)
 	needed := map[xproto.Keysym]uint8{
@@ -91,6 +96,8 @@ func GrabShortcuts(conn *xgb.Conn, xroot xproto.ScreenInfo, keymap [256][]xproto
 	return nil
 }
 
+// GrabMouse tells X that it should send left mouse
+// button click directly to the WM
 func GrabMouse(conn *xgb.Conn, xroot xproto.ScreenInfo) error {
 	return xproto.GrabButtonChecked(
 		conn, true, xroot.Root, xproto.EventMaskButtonPress,
@@ -99,6 +106,7 @@ func GrabMouse(conn *xgb.Conn, xroot xproto.ScreenInfo) error {
 	).Check()
 }
 
+// CreateCursor creates X cursor (XC_left_ptr)
 func CreateCursor(conn *xgb.Conn) (xproto.Cursor, error) {
 	cursor, err := xproto.NewCursorId(conn)
 	if err != nil {
