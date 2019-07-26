@@ -60,6 +60,10 @@ eventloop:
 				win.SendAttach(manager.Curr())
 				win.SendActivate(manager.Curr())
 			}
+		case xproto.UnmapNotifyEvent:
+			logging.Println(event)
+			win := NewWindow(uint32(e.Window), manager.Mailbox(), conn)
+			win.SendRemove()
 		case xproto.DestroyNotifyEvent:
 			logging.Println(event)
 			win := NewWindow(uint32(e.Window), manager.Mailbox(), conn)
@@ -124,6 +128,14 @@ func handleKeyPress(conn *xgb.Conn, key xproto.KeyPressEvent, keymap [256][]xpro
 		if winActive && manager.Curr() != fkeys[keysym] {
 			win := NewWindow(manager.Curr(), manager.Mailbox(), conn)
 			win.SendReattach(fkeys[keysym])
+			isSpecial := manager.Curr() == manager.SpecialWorkspace()
+			if isSpecial && manager.Prev() == fkeys[keysym] {
+				go func() {
+					attachLock.Lock()
+					win.SendActivate(manager.Prev())
+					win.SendActivate(manager.Curr())
+				}()
+			}
 		} else if !winActive && manager.Curr() != fkeys[keysym] {
 			win := NewWindow(uint32(key.Root), manager.Mailbox(), conn)
 			if manager.Curr() == manager.SpecialWorkspace() {

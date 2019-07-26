@@ -12,18 +12,19 @@ import (
 
 // Window is the basic structure representing X window
 type Window struct {
-	height  int
-	width   int
-	x       int
-	y       int
-	mailbox chan proto.Message
-	id      uint32
-	conn    *xgb.Conn
+	height         int
+	width          int
+	x              int
+	y              int
+	mailbox        chan proto.Message
+	id             uint32
+	conn           *xgb.Conn
+	removalAllowed bool
 }
 
 // NewWindow creates instance of Window
 func NewWindow(id uint32, c chan proto.Message, xc *xgb.Conn) *Window {
-	return &Window{0, 0, 0, 0, c, id, xc}
+	return &Window{0, 0, 0, 0, c, id, xc, true}
 }
 
 // Id returns identifier of window
@@ -220,15 +221,6 @@ func (window *Window) CouldBeDestroyed() bool {
 	return !xutil.HasAtomDefined("WM_DELETE_WINDOW", window.id, window.conn)
 }
 
-// CouldBeManaged check whether window could be managed by the WM
-func (window *Window) CouldBeManaged() bool {
-	if err := xutil.SetWindowX(window.x, window.id, window.conn); err != nil {
-		return false
-	}
-
-	return true
-}
-
 // Defocus makes window appear like the unfocused one
 func (window *Window) Defocus() error {
 	if window == nil {
@@ -281,6 +273,21 @@ func (window *Window) TakeFocus() error {
 	}
 
 	return xutil.FocusWindow(window.id, window.conn)
+}
+
+// DenyRemoval sets a flag that will forbid window removal
+func (window *Window) DenyRemoval() {
+	window.removalAllowed = false
+}
+
+// AllowRemoval sets a flag that permits window removal
+func (window *Window) AllowRemoval() {
+	window.removalAllowed = true
+}
+
+// IsRemovalAllowed checks whether it is allowed to remove the window
+func (window Window) IsRemovalAllowed() bool {
+	return window.removalAllowed
 }
 
 // IsDock performs check whether this window is dock or not

@@ -3,7 +3,8 @@ package main
 
 import (
     "fmt"
-	"github.com/BurntSushi/xgb"
+    "sync"
+    "github.com/BurntSushi/xgb"
     "github.com/Zamony/wm/proto"
     "github.com/Zamony/wm/xutil"
     "github.com/Zamony/wm/config"
@@ -25,6 +26,33 @@ const (
     // DefaultLayout sets default column layout
     DefaultLayout    = LayoutEqual
 )
+
+var (
+    unmapLock  ReattachLock
+    attachLock ReattachLock
+)
+
+// ReattachLock represents lock that can be harmlessly unlocked
+// even if there are not any locked goroutines
+type ReattachLock struct {
+    wg sync.WaitGroup
+    locked bool
+}
+
+// Lock makes the caller wait till unlock happens
+func (m *ReattachLock) Lock() {
+    m.wg.Add(1)
+    m.locked = true
+    m.wg.Wait()
+}
+
+// Unlock unblocks all awaiting goroutines if there are any
+func (m *ReattachLock) Unlock() {
+    if m.locked {
+        m.locked = false
+        m.wg.Done()
+    }
+}
 
 // Workspace represents a group of related windows
 type Workspace struct {
@@ -72,14 +100,12 @@ func (workspace *Workspace) Run() {
                 }
                 return
             }
-            workspace.CleanUp()
             if workspace.FindWindow(msg.From) != nil {
                 workspace.handleMsg(msg)
             } else if workspace.next != nil {
                 workspace.next <- msg
             }
         case workspace.id:
-            workspace.CleanUp()
             workspace.handleMsg(msg)
         default:
             if workspace.next != nil {
@@ -104,7 +130,6 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
         if workspace.FindWindow(msg.From) == nil {
             workspace.Add(win)
             workspace.Reshape()
-            workspace.Focus()
             if workspace.id == MaxWorkspaces {
                 workspace.Activate()
             }
@@ -112,33 +137,28 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
     case proto.Detach:
         if workspace.focus != nil {
             win := workspace.focus
-            go func() {
-                win.SendAttach(msg.From)
-                if workspace.id == MaxWorkspaces {
-                    win.SendActivate(msg.From)
-                }
-            }()
-            win.Defocus()
-            workspace.Refocus()
-            workspace.Remove(win)
             win.Unmap()
-            workspace.Reshape()
-            workspace.Focus()
             go func() {
-                if workspace.focus != nil {
-                    workspace.focus.SendFocusHere()
-                }
+                unmapLock.Lock()
+                win.SendAttach(msg.From)
+                attachLock.Unlock()
             }()
         }
     case proto.Remove:
-        win := NewWindow(msg.From, workspace.headc, msg.XConn)
+        win := workspace.FindWindow(msg.From)
         if win != nil && workspace.focus != nil {
+            if !win.IsRemovalAllowed() {
+                win.AllowRemoval()
+                break
+            }
             if win.Id() == workspace.focus.Id() {
                 win.Defocus()
                 workspace.Refocus()
             }
             workspace.Remove(win)
             workspace.Reshape()
+            workspace.Focus()
+            unmapLock.Unlock()
         }
 
     case proto.Close:
@@ -188,6 +208,7 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
         }
         workspace.Activate()
     case proto.Activate:
+        workspace.Reshape()
         workspace.Activate()
         workspace.Focus()
         xutil.SetCurrentDesktop(workspace.id, msg.XConn)
@@ -223,48 +244,6 @@ func (workspace *Workspace) handleMsg(msg proto.Message) {
 
     workspace.ChangeName()
     workspace.LogStatus()
-}
-
-// CleanUp removes windows from workspace that are no longer manageable
-func (workspace *Workspace) CleanUp() {
-    cleaned := false
-    for i := 0; i < workspace.central.Len(); i++ {
-        win := workspace.central.WindowByIndex(i)
-        if managed := win.CouldBeManaged(); !managed {
-            if win.Id() == workspace.focus.Id() {
-                workspace.Refocus()
-            }
-            workspace.Remove(win)
-            cleaned = true
-        }
-    }
-    for i := 0; i < workspace.left.Len(); i++ {
-        win := workspace.left.WindowByIndex(i)
-        if managed := win.CouldBeManaged(); !managed {
-            if win.Id() == workspace.focus.Id() {
-                workspace.Refocus()
-            }
-            workspace.Remove(win)
-            cleaned = true
-        }
-    }
-    for i := 0; i < workspace.right.Len(); i++ {
-        win := workspace.right.WindowByIndex(i)
-        if managed := win.CouldBeManaged(); !managed {
-            if win.Id() == workspace.focus.Id() {
-                workspace.Refocus()
-            }
-            workspace.Remove(win)
-            cleaned = true
-        }
-    }
-
-    if cleaned {
-        workspace.Reshape()
-        if workspace.focus != nil {
-            workspace.Focus()
-        }
-    }
 }
 
 // MoveLeft moves window to the left column
@@ -589,14 +568,17 @@ func (workspace *Workspace) Activate() {
 func (workspace *Workspace) Deactivate() {
     for i := 0; i < workspace.central.Len(); i++ {
         win := workspace.central.WindowByIndex(i)
+        win.DenyRemoval()
         win.Unmap()
     }
     for i := 0; i < workspace.left.Len(); i++ {
         win := workspace.left.WindowByIndex(i)
+        win.DenyRemoval()
         win.Unmap()
     }
     for i := 0; i < workspace.right.Len(); i++ {
         win := workspace.right.WindowByIndex(i)
+        win.DenyRemoval()
         win.Unmap()
     }
 }
