@@ -1,6 +1,6 @@
-**wmwm** is a pure Go autotiling window manager. It is very simple (2k loc) and lightweight
+**wmwm** is a pure Go autotiling window manager. It is very simple (2k loc) and uses ~80Mb RAM.
 
-## My double head setup
+## My dual head setup
 
 ![WMWM multihead setup](doc/wmwm.png)
 
@@ -23,11 +23,12 @@ Windows and columns belong to workspaces. In wmwm you have eight workspaces (nin
 + EWMH (_NET_NUMBER_OF_DESKTOPS, _NET_DESKTOP_NAMES, _NET_CURRENT_DESKTOP)
 
 ## Installation
-Precompiled binaries are available for download. You can also compile it yourself:
+Precompiled binary [is available for download](https://github.com/Zamony/wmwm/releases). You can also compile it yourself:
 ```
 git clone https://github.com/Zamony/wmwm.git
 go build
 ```
+You also need to update your `~/.xinitrc` adding the following line `exec ./wm` where `./wm` is the path to the compiled binary
 
 ## Keybindings
 + ``Win + ` `` - run application launcher (you can set one with `--launcher`)
@@ -39,6 +40,7 @@ go build
 + `F1..F9` - activate workspace
 + `Win + F1..F9` - move window to specified workspace
 + `Win + f` - activate fullscreen mode
++ `Ctrl + Alt + Backpace` - terminate window manager
 
 ## Configuration
 Configuration is done via command line arguments:
@@ -54,3 +56,4 @@ Configuration is done via command line arguments:
   -padding-top      Value of top padding (useful for panels and bars)
   -term string      A command to launch terminal emulator (default "xterm")
 ```
+You may want to use panel or status bar with wmwm. I use tint2 with the configuration file available [here](https://gist.github.com/Zamony/a2440eb20dbc530a2d0380909738566e)
