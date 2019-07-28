@@ -1,4 +1,4 @@
-**wmwm** is a pure Go autotiling window manager. It is very simple (2k loc) and uses ~80Mb RAM.
+**wmwm** is a pure Go autotiling window manager. It is very simple (2k loc) and lightweight
 
 ## My dual head setup
 
