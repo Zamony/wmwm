@@ -1,4 +1,4 @@
-**wmwm** is a pure Go autotiling window manager. It is very simple (2k loc) and lightweight
+**wmwm** is a pure Go autotiling window manager for X11. It is very simple (2k loc) and lightweight
 
 ## My dual head setup
 
