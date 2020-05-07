@@ -5,8 +5,8 @@ import (
 
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
-	"github.com/Zamony/wm/proto"
-	"github.com/Zamony/wm/xutil"
+	"github.com/Zamony/wmwm/proto"
+	"github.com/Zamony/wmwm/xutil"
 )
 
 func TestColumnIndexById(t *testing.T) {

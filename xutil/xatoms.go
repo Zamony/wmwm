@@ -6,7 +6,7 @@ import (
 
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
-	"github.com/Zamony/wm/logging"
+	"github.com/Zamony/wmwm/logging"
 )
 
 // GetAtom returns atom according to the specified string

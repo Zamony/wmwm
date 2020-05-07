@@ -4,10 +4,10 @@ package main
 import (
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
-	"github.com/Zamony/wm/config"
-	"github.com/Zamony/wm/logging"
-	"github.com/Zamony/wm/proto"
-	"github.com/Zamony/wm/xutil"
+	"github.com/Zamony/wmwm/config"
+	"github.com/Zamony/wmwm/logging"
+	"github.com/Zamony/wmwm/proto"
+	"github.com/Zamony/wmwm/xutil"
 )
 
 // Window is the basic structure representing X window

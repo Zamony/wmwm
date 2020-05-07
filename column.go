@@ -4,8 +4,8 @@ package main
 import (
 	"errors"
 
-	"github.com/Zamony/wm/logging"
-	"github.com/Zamony/wm/xutil"
+	"github.com/Zamony/wmwm/logging"
+	"github.com/Zamony/wmwm/xutil"
 )
 
 // Column represent group of windows having

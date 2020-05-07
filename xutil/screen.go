@@ -6,7 +6,7 @@ import (
 
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xinerama"
-	"github.com/Zamony/wm/config"
+	"github.com/Zamony/wmwm/config"
 )
 
 // Screen represents logical screen

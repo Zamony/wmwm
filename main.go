@@ -9,10 +9,10 @@ import (
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xinerama"
 	"github.com/BurntSushi/xgb/xproto"
-	"github.com/Zamony/wm/config"
-	"github.com/Zamony/wm/kbrd"
-	"github.com/Zamony/wm/logging"
-	"github.com/Zamony/wm/xutil"
+	"github.com/Zamony/wmwm/logging"
+	"github.com/Zamony/wmwm/config"
+	"github.com/Zamony/wmwm/kbrd"
+	"github.com/Zamony/wmwm/xutil"
 )
 
 func processEvents(

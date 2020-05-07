@@ -4,7 +4,7 @@ package xutil
 import (
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
-	"github.com/Zamony/wm/kbrd"
+	"github.com/Zamony/wmwm/kbrd"
 )
 
 // Shortcut represents keys combination
