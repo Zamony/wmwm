@@ -1,5 +1,10 @@
 **wmwm** is a pure Go autotiling window manager for X11. It is very simple (2k loc) and lightweight
 
+```
+🚧 This project isn't actively developed anymore.
+Nevertheless, it is a good starting point for anyone who wants to implement a window manager in Go.
+```
+
 ## My dual head setup
 
 ![WMWM multihead setup](doc/wmwm.png)
